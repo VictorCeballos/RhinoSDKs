@@ -397,6 +397,16 @@ public:
     );
 
   /*
+  In  opennurbs points within ON_ZERO_TOLERANCE are generally considered
+  to be the same.
+  Returns:
+    True if for each coordinate pair,
+    |a-b| <= ON_ZERO_TOLERANCE
+    or |a-b| <= (fabs(a)+fabs(b))*ON_RELATIVE_TOLERANCE.
+  */
+  bool IsCoincident(const ON_2dPoint& P) const;
+
+  /*
   Returns:
     (A+B)/2
   Remarks:
@@ -2244,6 +2254,8 @@ ON_IsRightHandFrame( // true if X, Y, Z are orthonormal and right handed
 // Find the largest absolute value of coordinates from an array of points (possibly homogeneous).
 ON_DECL
 double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count);
+ON_DECL
+double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count, int stride);   // stride>=dim+is_rat
 
 ///////////////////////////////////////////////////////////////
 //

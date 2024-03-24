@@ -828,6 +828,16 @@ public:
                              const CRhinoObjectAttributes* = nullptr,
                              const ON_Xform* pOptionalBlockXform = nullptr) const;
   
+  //////////////////////////
+  // Description:
+  //   Converts the passed in material to a single color material, no textures, no PBR settings,
+  //   and no specific lighting characteristics (i.e. specular, reflective, etc...), just a plain
+  //   specified single color will be used, everything else will be stripped and/or deleted.
+  // Note: This also does not apply any kind of color adjustments to White or Black values.
+  bool  ConvertToSingleColorMaterial(CDisplayPipelineMaterial&,
+                                     ON_Color,
+                                     bool noLigthing=false) const;
+
   // Description:
   //   Modifies the passed in display material object so that it draws
   //   blended with the passed in color...

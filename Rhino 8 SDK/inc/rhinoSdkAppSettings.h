@@ -614,7 +614,6 @@ public:
 
   void SetQuadBuffering(bool);
   bool QuadBuffering() const;
-
 private:
   class CRhOpenGLSettingsPrivate* m_private = nullptr;
 };
@@ -900,6 +899,10 @@ public:
   bool AlwaysDisplayAllFiletypes() const;
   void SetAlwaysDisplayAllFiletypes(bool on);
 
+  bool RemoveDotFromRhlFiles() const;
+  void RemoveDotFromRhlFiles(bool on);
+
+
 private:
   int m_import_file_layer_matching_option = CRhinoAppFileSettings::ImportFileLayerMatchingOptionDefault;
 
@@ -999,9 +1002,6 @@ public:
     popup_menu,
     popup_toolbar,
     run_macro
-#if defined (ON_RUNTIME_APPLE)
-    , pan_and_rotate_view
-#endif
   };
 
   int ParseStartUpCommandList( ON_ClassArray<ON_wString> &result) const;
@@ -1470,6 +1470,7 @@ class RHINO_SDK_CLASS CRhinoAppShortcutKeys
 public:
   CRhinoAppShortcutKeys();
   CRhinoAppShortcutKeys( const CRhinoAppShortcutKeys& src);
+  ~CRhinoAppShortcutKeys();
 
   CRhinoAppShortcutKeys& operator=( const CRhinoAppShortcutKeys& src);
 
@@ -1668,9 +1669,319 @@ public:
     alt_ctrl_page_up,
     alt_ctrl_page_down,
 
-    shortcut_key_count
+    none,
+
+    // 29 September 2023, John Morse
+    // https://mcneel.myjetbrains.com/youtrack/issue/RH-77352
+    // Mac only Alt+XX shortcuts
+    alt_home,
+    alt_end,
+    alt_a,
+    alt_b,
+    alt_c,
+    alt_d,
+    alt_e,
+    alt_f,
+    alt_g,
+    alt_h,
+    alt_i,
+    alt_j,
+    alt_k,
+    alt_l,
+    alt_m,
+    alt_n,
+    alt_o,
+    alt_p,
+    alt_q,
+    alt_r,
+    alt_s,
+    alt_t,
+    alt_u,
+    alt_v,
+    alt_w,
+    alt_x,
+    alt_y,
+    alt_z,
+    alt_0,
+    alt_1,
+    alt_2,
+    alt_3,
+    alt_4,
+    alt_5,
+    alt_6,
+    alt_7,
+    alt_8,
+    alt_9,
+    alt_f1,
+    alt_f2,
+    alt_f3,
+    alt_f4,
+    alt_f5,
+    alt_f6,
+    alt_f7,
+    alt_f8,
+    alt_f9,
+    alt_f10,
+    alt_f11,
+    alt_f12,
+
+    alt_shift_home,
+    alt_shift_end,
+    alt_shift_a,
+    alt_shift_b,
+    alt_shift_c,
+    alt_shift_d,
+    alt_shift_e,
+    alt_shift_f,
+    alt_shift_g,
+    alt_shift_h,
+    alt_shift_i,
+    alt_shift_j,
+    alt_shift_k,
+    alt_shift_l,
+    alt_shift_m,
+    alt_shift_n,
+    alt_shift_o,
+    alt_shift_p,
+    alt_shift_q,
+    alt_shift_r,
+    alt_shift_s,
+    alt_shift_t,
+    alt_shift_u,
+    alt_shift_v,
+    alt_shift_w,
+    alt_shift_x,
+    alt_shift_y,
+    alt_shift_z,
+    alt_shift_0,
+    alt_shift_1,
+    alt_shift_2,
+    alt_shift_3,
+    alt_shift_4,
+    alt_shift_5,
+    alt_shift_6,
+    alt_shift_7,
+    alt_shift_8,
+    alt_shift_9,
+    alt_shift_f1,
+    alt_shift_f2,
+    alt_shift_f3,
+    alt_shift_f4,
+    alt_shift_f5,
+    alt_shift_f6,
+    alt_shift_f7,
+    alt_shift_f8,
+    alt_shift_f9,
+    alt_shift_f10,
+    alt_shift_f11,
+    alt_shift_f12,
+
+    maccontrol_home,
+    maccontrol_end,
+    maccontrol_a,
+    maccontrol_b,
+    maccontrol_c,
+    maccontrol_d,
+    maccontrol_e,
+    maccontrol_f,
+    maccontrol_g,
+    maccontrol_h,
+    maccontrol_i,
+    maccontrol_j,
+    maccontrol_k,
+    maccontrol_l,
+    maccontrol_m,
+    maccontrol_n,
+    maccontrol_o,
+    maccontrol_p,
+    maccontrol_q,
+    maccontrol_r,
+    maccontrol_s,
+    maccontrol_t,
+    maccontrol_u,
+    maccontrol_v,
+    maccontrol_w,
+    maccontrol_x,
+    maccontrol_y,
+    maccontrol_z,
+    maccontrol_0,
+    maccontrol_1,
+    maccontrol_2,
+    maccontrol_3,
+    maccontrol_4,
+    maccontrol_5,
+    maccontrol_6,
+    maccontrol_7,
+    maccontrol_8,
+    maccontrol_9,
+    maccontrol_f1,
+    maccontrol_f2,
+    maccontrol_f3,
+    maccontrol_f4,
+    maccontrol_f5,
+    maccontrol_f6,
+    maccontrol_f7,
+    maccontrol_f8,
+    maccontrol_f9,
+    maccontrol_f10,
+    maccontrol_f11,
+    maccontrol_f12,
+
+    maccontrol_alt_home,
+    maccontrol_alt_end,
+    maccontrol_alt_a,
+    maccontrol_alt_b,
+    maccontrol_alt_c,
+    maccontrol_alt_d,
+    maccontrol_alt_e,
+    maccontrol_alt_f,
+    maccontrol_alt_g,
+    maccontrol_alt_h,
+    maccontrol_alt_i,
+    maccontrol_alt_j,
+    maccontrol_alt_k,
+    maccontrol_alt_l,
+    maccontrol_alt_m,
+    maccontrol_alt_n,
+    maccontrol_alt_o,
+    maccontrol_alt_p,
+    maccontrol_alt_q,
+    maccontrol_alt_r,
+    maccontrol_alt_s,
+    maccontrol_alt_t,
+    maccontrol_alt_u,
+    maccontrol_alt_v,
+    maccontrol_alt_w,
+    maccontrol_alt_x,
+    maccontrol_alt_y,
+    maccontrol_alt_z,
+    maccontrol_alt_0,
+    maccontrol_alt_1,
+    maccontrol_alt_2,
+    maccontrol_alt_3,
+    maccontrol_alt_4,
+    maccontrol_alt_5,
+    maccontrol_alt_6,
+    maccontrol_alt_7,
+    maccontrol_alt_8,
+    maccontrol_alt_9,
+    maccontrol_alt_f1,
+    maccontrol_alt_f2,
+    maccontrol_alt_f3,
+    maccontrol_alt_f4,
+    maccontrol_alt_f5,
+    maccontrol_alt_f6,
+    maccontrol_alt_f7,
+    maccontrol_alt_f8,
+    maccontrol_alt_f9,
+    maccontrol_alt_f10,
+    maccontrol_alt_f11,
+    maccontrol_alt_f12,
+
+    maccontrol_ctrl_home,
+    maccontrol_ctrl_end,
+    maccontrol_ctrl_a,
+    maccontrol_ctrl_b,
+    maccontrol_ctrl_c,
+    maccontrol_ctrl_d,
+    maccontrol_ctrl_e,
+    maccontrol_ctrl_f,
+    maccontrol_ctrl_g,
+    maccontrol_ctrl_h,
+    maccontrol_ctrl_i,
+    maccontrol_ctrl_j,
+    maccontrol_ctrl_k,
+    maccontrol_ctrl_l,
+    maccontrol_ctrl_m,
+    maccontrol_ctrl_n,
+    maccontrol_ctrl_o,
+    maccontrol_ctrl_p,
+    maccontrol_ctrl_q,
+    maccontrol_ctrl_r,
+    maccontrol_ctrl_s,
+    maccontrol_ctrl_t,
+    maccontrol_ctrl_u,
+    maccontrol_ctrl_v,
+    maccontrol_ctrl_w,
+    maccontrol_ctrl_x,
+    maccontrol_ctrl_y,
+    maccontrol_ctrl_z,
+    maccontrol_ctrl_0,
+    maccontrol_ctrl_1,
+    maccontrol_ctrl_2,
+    maccontrol_ctrl_3,
+    maccontrol_ctrl_4,
+    maccontrol_ctrl_5,
+    maccontrol_ctrl_6,
+    maccontrol_ctrl_7,
+    maccontrol_ctrl_8,
+    maccontrol_ctrl_9,
+    maccontrol_ctrl_f1,
+    maccontrol_ctrl_f2,
+    maccontrol_ctrl_f3,
+    maccontrol_ctrl_f4,
+    maccontrol_ctrl_f5,
+    maccontrol_ctrl_f6,
+    maccontrol_ctrl_f7,
+    maccontrol_ctrl_f8,
+    maccontrol_ctrl_f9,
+    maccontrol_ctrl_f10,
+    maccontrol_ctrl_f11,
+    maccontrol_ctrl_f12,
+
+    maccontrol_shift_home,
+    maccontrol_shift_end,
+    maccontrol_shift_a,
+    maccontrol_shift_b,
+    maccontrol_shift_c,
+    maccontrol_shift_d,
+    maccontrol_shift_e,
+    maccontrol_shift_f,
+    maccontrol_shift_g,
+    maccontrol_shift_h,
+    maccontrol_shift_i,
+    maccontrol_shift_j,
+    maccontrol_shift_k,
+    maccontrol_shift_l,
+    maccontrol_shift_m,
+    maccontrol_shift_n,
+    maccontrol_shift_o,
+    maccontrol_shift_p,
+    maccontrol_shift_q,
+    maccontrol_shift_r,
+    maccontrol_shift_s,
+    maccontrol_shift_t,
+    maccontrol_shift_u,
+    maccontrol_shift_v,
+    maccontrol_shift_w,
+    maccontrol_shift_x,
+    maccontrol_shift_y,
+    maccontrol_shift_z,
+    maccontrol_shift_0,
+    maccontrol_shift_1,
+    maccontrol_shift_2,
+    maccontrol_shift_3,
+    maccontrol_shift_4,
+    maccontrol_shift_5,
+    maccontrol_shift_6,
+    maccontrol_shift_7,
+    maccontrol_shift_8,
+    maccontrol_shift_9,
+    maccontrol_shift_f1,
+    maccontrol_shift_f2,
+    maccontrol_shift_f3,
+    maccontrol_shift_f4,
+    maccontrol_shift_f5,
+    maccontrol_shift_f6,
+    maccontrol_shift_f7,
+    maccontrol_shift_f8,
+    maccontrol_shift_f9,
+    maccontrol_shift_f10,
+    maccontrol_shift_f11,
+    maccontrol_shift_f12,
   };
 
+  static shortcut_key FromKeyCombo(bool control, bool shift, bool alt, bool macControlKeyDown, unsigned int nChar);
   static void Label(int key, ON_wString& label);
 
   const wchar_t* Macro( shortcut_key) const;
@@ -1678,12 +1989,13 @@ public:
   void ClearAllMacros();
 
 protected:
+  ON_DEPRECATED_MSG("This function should not be used.")
   bool KeyInRange( shortcut_key) const;
 
-  ON_wString m_macros[shortcut_key_count];
+  ON_wString m_macros[177]; // keep at 177 in order to maintain same class size as Rhino 7
 
 private:
-  ON__UINT_PTR m_private = 0;
+  class CRhAppShortcutKeysPrivate* m_private = nullptr;
 };
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -3016,6 +3328,18 @@ public:
 
   bool OrthoUseZ() const;
   void SetOrthoUseZ(bool bUse);
+
+  bool DisableRightClickAsEnter() const;
+  void SetDisableRightClickAsEnter(bool);
+
+  bool ControlClickSubObjectDeselect() const;
+  void SetControlClickSubObjectDeselect(bool bEnable);
+
+  bool NudgeAutoUpdateMesh() const;
+  void SetNudgeAutoUpdateMesh(bool bEnable);
+
+  UINT NudgeAutoUpdateDelay() const;
+  void SetNudgeAutoUpdateDelay(UINT delay);
 
   // For internal use only
   class CRhAppSettingsData* Private() const;

@@ -183,6 +183,12 @@ public:
     const ON_Xform* xform
   ) const override; // CRhinoObject override
 
+  bool GetTightBoundingBoxOld(
+    ON_BoundingBox& tight_bbox,
+    bool bGrowBox,
+    const ON_Xform* xform
+  ) const;
+
   ON_BoundingBox BoundingBox() const override; // CRhinoObject override
 
   ON_BoundingBox BoundingBox(

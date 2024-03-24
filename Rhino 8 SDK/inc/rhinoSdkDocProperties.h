@@ -367,14 +367,15 @@ public:
 
   /*
   Description:
-    Find a named view
+    Find a named view.
   Parameters:
     name - [in]
   Returns:
-    pointer to named construction plane
+    pointer to the named view or null if not found.
   See Also:
     CRhinoDocProperties::NamedView
     CRhinoDocProperties::AddNamedView
+    CRhinoDocProperties::GetNamedViewSelection
   */
   const ON_3dmView* NamedView( const wchar_t* name ) const;
 
@@ -398,7 +399,7 @@ public:
 
   /*
   Description:
-    Add named construction plane to document.
+    Add a named view to the document.
   Parameters:
     named_view - [in]
   Remarks:
@@ -416,6 +417,7 @@ public:
     CRhinoDocProperties::NamedViewIndex
     CRhinoDocProperties::RemoveNamedView
     CRhinoDocProperties::MoveNamedView
+    CRhinoDocProperties::GetNamedViewSelection
   */
   int AddNamedView( const ON_3dmView& named_view );
 
@@ -432,12 +434,13 @@ public:
     CRhinoDocProperties::AddNamedView
     CRhinoDocProperties::RemoveNamedView
     CRhinoDocProperties::MoveNamedView
+    CRhinoDocProperties::GetNamedViewSelection
   */
   int NamedViewIndex( const ON_3dmView* view ) const;
 
   /*
   Description:
-    Get zero based index of named view
+    Remove a named view from the document.
   Parameters:
     view_index - [in]
   Returns:
@@ -447,6 +450,7 @@ public:
     CRhinoDocProperties::NamedViewIndex
     CRhinoDocProperties::AddNamedView
     CRhinoDocProperties::MoveNamedView
+    CRhinoDocProperties::GetNamedViewSelection
   */
   BOOL32 RemoveNamedView( int view_index );
 
@@ -463,8 +467,25 @@ public:
     CRhinoDocProperties::NamedViewIndex
     CRhinoDocProperties::AddNamedView
     CRhinoDocProperties::RemoveNamedView
+    CRhinoDocProperties::GetNamedViewSelection
   */
   bool MoveNamedView( int view_index, int view_index_before );
+
+  /*
+  Description:
+    Gets the current selection in the Named Views panel. If more than one such panel is open,
+    it will return the selection in the most recently opened panel.
+  Parameters:
+    named_views - [out] The names of the selected named views are appended to this array.
+  Returns:
+    true if successful, false if there are no named view panels open.
+  See Also:
+    CRhinoDocProperties::NamedView
+    CRhinoDocProperties::NamedViewIndex
+    CRhinoDocProperties::AddNamedView
+    CRhinoDocProperties::RemoveNamedView
+  */
+  bool GetNamedViewSelection(ON_ClassArray<ON_wString>& named_views) const;
 
   /*
   Description:
@@ -891,6 +912,7 @@ private:
 
 private:
   friend class CRhinoDoc;
+  friend class CRhRenderSettingsHelper;
   friend class CRhinoNamedViewCameraIcon;
   CRhinoDoc*             m_doc;
   ON_wString             m_model_name;

@@ -336,6 +336,15 @@
 	#define SS_EMBEDDED_FILES                   L"embedded-files"
 		#define SS_FILE                           L"file"
 
+	// Additions for V8. Texture proxy information is now persistent so that preview meta-data can work.
+	#define SS_TP_TEXTURE_PROXY_SECTION         L"texture-proxy-section"
+	#define SS_TP_COMBINED                        L"combined"
+	#define SS_TP_UNCOMBINED                      L"uncombined"
+	#define SS_TP_TEXTURE_PROXY                     L"texture-proxy"
+	#define SS_TP_ID                                L"id"
+	#define SS_TP_MEMBERS                             L"members"
+	#define SS_TP_MEMBER                                L"member"
+
 #define SS_UD_ROOT                              L"render-content-manager-data"
 
 	#define SS_UD_MATERIAL                          L"material"      // }

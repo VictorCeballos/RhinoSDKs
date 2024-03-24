@@ -10,8 +10,8 @@
 #define RHINO_WINDOW_HANDLE NSView*
 #define RHINO_WINDOW_IMAGE_HANDLE NSImage*
 #else
-#define RHINO_WINDOW_HANDLE void*
-#define RHINO_WINDOW_IMAGE_HANDLE void*
+#define RHINO_WINDOW_HANDLE UIView*
+#define RHINO_WINDOW_IMAGE_HANDLE UIImage*
 #endif
 #endif
 

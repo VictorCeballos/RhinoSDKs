@@ -392,7 +392,7 @@ public:
   */
   bool OccludingSectionOption() const;
 
-  bool SectiveClippingOption() const;
+  bool SelectiveClippingOption() const;
 
 	ON_HLD_Object& operator=(const ON_HLD_Object&) = default;
 protected:

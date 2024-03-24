@@ -1938,6 +1938,7 @@ protected:
   friend class CRhinoRead3dmHelper;
   friend class CRhinoHistoryManager;
   friend class CRhinoHistoryRecordTable;
+  friend class CRhObjectSdkExtension;
 
   virtual int SubObjectsAreSelected() const; // returns number of selected subobjects
   virtual int SubObjectsAreHighlighted() const; // returns number of highlighted subobjects

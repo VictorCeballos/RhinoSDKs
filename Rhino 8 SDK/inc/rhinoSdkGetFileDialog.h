@@ -213,7 +213,7 @@ public:
     save_xps,
     custom, // RH-50534 - 28 Jan 2019, John Croudy.
     save_rendering_dialog,
-
+    save_csv_dialog,
     // This value is for internal use only. It will change if more
     // items are added. Never use this value in your plug-in.
     file_dialog_type_internal_numof,

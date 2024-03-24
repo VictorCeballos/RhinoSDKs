@@ -95,19 +95,26 @@ public:
 
   operator HBITMAP();
   operator HBITMAP() const;
+    
+  //Work-alike for CDC::BitBlt or ::BitBlt where both drawing surfaces are actually CRhinoDib.
+  //Note that the coordinate system is the same as Windows DC - 0,0 is at the top left. (For CRhinoDib itself, 0,0 is bottom left)
+  //Copys the pixels from srcDib to this.
+  bool BitBlt(const ON_4iRect& destRect,
+              const CRhinoDib& srcDib,
+              const ON_2iPoint& srcPoint);
 
 #if defined(ON_RUNTIME_COCOA_AVAILABLE)
   
   CRhinoDib(const NSImage*);
   CRhinoDib& operator=(const NSImage*);
   void SetDib(const NSImage*);
-  NSImage* ToNSImage() const;
+  NSImage* ToNSImage(bool upside_down=false) const;
   operator NSImage*() const;
 
   CRhinoDib(const NSBitmapImageRep*);
   CRhinoDib& operator=(const NSBitmapImageRep*);
   void SetDib(const NSBitmapImageRep*);
-  NSBitmapImageRep* ToNSBitmapImageRep() const;
+  NSBitmapImageRep* ToNSBitmapImageRep(bool upside_down=false) const;
   operator NSBitmapImageRep* () const;
 
   CRhinoDib(const CGImage*);
@@ -399,6 +406,21 @@ public:
   bool FillSolid(COLORREF);
 
   bool GradientFill(COLORREF topLeft, COLORREF topRight, COLORREF bottomLeft, COLORREF bottomRight);
+
+  //Points are in DIB space - ie, the same coordinate system as GetPixel.  Use FlipPoint/Flipped points to switch
+  bool DrawFilledPolygon(const ON_SimpleArray<ON_2iPoint>& points, ON_Color cr);
+  bool DrawFilledTriangle(const ON_2iPoint& p1, const ON_2iPoint& p2, const ON_2iPoint& p3, ON_Color);
+  bool DrawFilledCircle(const ON_2iPoint& center, int radius, ON_Color);
+
+  bool DrawLine(const ON_2iPoint& p1, const ON_2iPoint& p2, ON_Color color, int thickness = 0, bool circle_caps = false);
+  bool DrawPolyline(const ON_SimpleArray<ON_2iPoint>& points, ON_Color color, int thickness = 0, bool circle_caps = false, bool close = false);
+
+  //Use these functions to transform points and arrays of points between DIB space (bottom up) and CDC space (top down)
+  void FlipPoint(ON_2iPoint&) const;
+  void FlipPoints(ON_SimpleArray<ON_2iPoint>&) const;
+
+  ON_2iPoint FlippedPoint(const ON_2iPoint&) const;
+  ON_SimpleArray<ON_2iPoint> FlippedPoints(const ON_SimpleArray<ON_2iPoint>&) const;
 
   // shift a dib up by one pixel - wraps other side around
   // only works on a 24 and 32 bit dibs right now.

@@ -612,6 +612,11 @@ public:
 		Return the initial channel to display in the render window.  By default, IRhRdkRenderWíndow::chanRGBA. (pvData = UUID*) */
 	/*virtual*/ ON_UUID InitialChannelToDisplay(void) const; // [SDK_UNFREEZE]
 
+	/** Helper function. Calls EVF(L"TextureNeedsBaking"). Override EVF() to implement this.
+		Returns true if this renderer needs 'texture' to be baked into a bitmap for rendering, false otherwise.
+		By default, returns false for all textures. */
+	/*virtual*/ bool TextureNeedsBaking(const CRhRdkTexture& texture) const; // [SDK_UNFREEZE]
+
 	/* EVF example:
 	\code
 	static const UUID MyCustomChannel = { ... };
@@ -1301,6 +1306,7 @@ enum eRhRdkBakingFunctions : ON__UINT32	//Bitfields, so you will need to cast th
 };
 
 RHRDK_SDK bool RhRdkNeedsTextureBaking(const CRhinoObject* pObject, eRhRdkBakingFunctions functions, bool& bDoubleSided, const CRhRdkObjectAncestry* pOptionalAncestry = nullptr, const CRhRdkMaterial* pOptionalMaterial = nullptr);
+RHRDK_SDK bool RhRdkNeedsTextureBaking(const CRhinoObject* pObject, eRhRdkBakingFunctions functions, bool& bDoubleSided, const ON_UUID& rendererId, const CRhRdkObjectAncestry* pOptionalAncestry = nullptr, const CRhRdkMaterial* pOptionalMaterial = nullptr);
 RHRDK_SDK bool RhRdkBakeTexture(const CRhinoObject* pObject, const ON_Xform& blockTransform, ON_Texture::TYPE textureChannel, bool bFront,
 								const ON_2iSize & bitmapSize, ON_wString & strFileNameOut, const CRhRdkObjectAncestry* pOptionalAncestry = nullptr, const CRhRdkMaterial* pOptionalMaterial = nullptr);
 
@@ -1313,6 +1319,18 @@ RHRDK_SDK bool RhRdkBakeTextureEx(const CRhinoObject* pObject,
 	                              bool bAsync,
 	                              const CRhRdkObjectAncestry* pOptionalAncestry = nullptr, 
 	                              const CRhRdkMaterial* pOptionalMaterial = nullptr);
+
+RHRDK_SDK bool RhRdkBakeTextureCancellable(const CRhinoObject* pObject,
+	const ON_Xform& blockTransform,
+	ON_Texture::TYPE textureChannel,
+	bool bFront,
+	const ON_2iSize& bitmapSize,
+	ON_wString& strFileNameOut,
+	bool bAsync,
+	bool bAllowCancel,
+	bool &bCancelledOut,
+	const CRhRdkObjectAncestry* pOptionalAncestry = nullptr,
+	const CRhRdkMaterial* pOptionalMaterial = nullptr);
 
 RDK_DEPRECATED RHRDK_SDK bool RhRdkGetUnpackTargetFolder(ON_wString& sTargetFolderOut);
 
@@ -1487,6 +1505,16 @@ RHRDK_SDK void RhRdkAssignMaterialToObjects(CRhinoDoc& doc, const ON_ClassArray<
 	 If \e true, a message box is used, otherwise the command line is used. */
 RHRDK_SDK void RhRdkAssignMaterialToObjects(CRhinoDoc& doc, const ON_ClassArray<CRhinoObjRef>& aObject, const UUID& uuidInstance,
                RhRdkAssignToSubFaceChoices sfc, RhRdkAssignToBlockChoices bc, bool bInteractive);
+
+/** Assign a material to a collection of layers via layer indices.
+	\param doc is the document containing the material and the layers.
+	\param layer_indices is an array of layer indices identifying the layers to assign the material to.
+	\param uuidInstance is the instance id of the material.
+	\param bInteractive specifies how to ask the user questions.
+	 If \e true, a message box is used, otherwise the command line is used.
+	 This is for future use as no questions are currently asked. */
+RHRDK_SDK bool RhRdkAssignMaterialToLayers(CRhinoDoc& doc, const ON_SimpleArray<int>& layer_indices,
+                                           const UUID& uuidInstance, bool bInteractive);
 
 /** \internal For internal use only. Please do not use this class. It will soon be deleted. */
 class RHRDK_SDK CRhRdkInternalSnapshotWorkaround final

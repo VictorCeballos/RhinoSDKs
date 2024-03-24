@@ -1193,11 +1193,24 @@ public:
 
   void ClearEvaluationCache() const;
 
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="this_heap"></param>
+  /// <param name="src"></param>
+  /// <param name="src_heap"></param>
+  /// <param name="copy_status">
+  /// If (0 != 1(&amp;)copy_status, then fragments were copied.
+  /// If (0 != 2(&amp;)copy_status, then fragment per vertex texture coordinates were copied.
+  /// If (0 != 4(&amp;)copy_status, then fragment per vertex principal curvatures were copied.
+  /// If (0 != 8(&amp;)copy_status, then fragment per vertex colors were copied.
+  /// </param>
+  /// <returns></returns>
   bool CopyEvaluationCacheForExperts(
     class ON_SubDHeap& this_heap, 
     const ON_SubDLevel& src, 
     const class ON_SubDHeap& src_heap, 
-    bool& bFragmentsWereCopied
+    unsigned& copy_status
   );
     
   void ClearTopologicalAttributes() const
@@ -2570,21 +2583,33 @@ public:
     m_fragment_colors_settings_hash = hash;
   }
 
-  const ON_MappingTag FragmentColorsMappingTag() const;
-  void SetFragmentColorsMappingTag(const ON_MappingTag& mapping_tag) const;
+  const ON_MappingTag ColorsMappingTag() const;
+  void SetColorsMappingTag(const ON_MappingTag& mapping_tag) const;
 
 private:
   mutable ON_SubDComponentLocation m_subd_appearance = ON_SubD::DefaultSubDAppearance;
   
   mutable ON_SubDTextureCoordinateType m_texture_coordinate_type = ON_SubDTextureCoordinateType::Unset;
   unsigned short m_reserved = 0;
-  mutable ON_MappingTag m_texture_mapping_tag;
-  mutable ON_MappingTag m_fragment_colors_mapping_tag;
 
-  // hash of the settings used to create the current fragment texture coordinates
+  // m_texture_mapping_tag identifies the mapping used to set the fragment per vertex texture coordinates.
+  // If m_texture_mapping_tag is set and fragment per vertex texture coordinates are missing, 
+  // m_texture_mapping_tag.m_mapping_id specifies the method used to update the texture coordinates.
+  mutable ON_MappingTag m_texture_mapping_tag;
+
+  // m_colors_mapping_tag identifies the mapping used to set the fragment per vertex colors.
+  // If m_colors_mapping_tag is set and fragment per vertex colors are missing, 
+  // m_colors_mapping_tag.m_mapping_id specifies the method used to update the colors.
+  // Per vertex colors are used for false color analysis modes (curvature, draft angle) and
+  // other specific uses.
+  mutable ON_MappingTag m_colors_mapping_tag;
+
+  // hash of the settings used to create the current fragment texture coordinates.
+  // This hash has meaning only when fragments with per vertex texture coordinates exist.
   mutable ON_SHA1_Hash m_fragment_texture_settings_hash = ON_SHA1_Hash::EmptyContentHash;
 
   // hash of the settings used to create the current fragment vertex colors
+  // This hash has meaning only when fragments with per vertex colors exist.
   mutable ON_SHA1_Hash m_fragment_colors_settings_hash = ON_SHA1_Hash::EmptyContentHash;
 
   ON_SimpleArray< ON_SubDLevel* > m_levels;
@@ -2696,9 +2721,34 @@ private:
   Number of quads added. When all input is valid the
   returned value is >= 4 and equal to face->m_edge_count.
   */
+
+
+  /// <summary>
+  /// Apply Catmull-Clark subdivision to face
+  /// </summary>
+  /// <param name="face"></param>
+  /// <param name="bSubdividePackRect">
+  /// If bSubdividePackRect and face->PackRectIsSet() are both true
+  /// then the pac rect for face is subdivided and assigned to the
+  /// subdivision quads. 
+  /// Note well: 
+  /// If face is an n-gon (n != 4), the existing pack rect id will be used for the
+  /// first two adjacent subddividsion quads and floor((n-1)/2) new pack rect ids
+  /// are generated for each subsequent pair of adjacent quads. When n is odd, the last
+  /// new pack rect contains a single quad that is assigned a new pack id. 
+  /// This is because pack rects MUST form rectangular regions.
+  /// The packed texture space assigned to the subdivided quads is identical to
+  /// the portion assigned before subdivision. Thus packed texture mappings will not
+  /// change under subdivision.
+  /// </param>
+  /// <param name="next_pack_id">
+  /// The value to use for the next new pack id if face is an n-gon
+  /// </param>
+  /// <returns></returns>
   unsigned int Internal_GlobalQuadSubdivideFace(
     const ON_SubDFace* face,
-    unsigned max_pack_id
+    bool bSubdividePackRect,
+    unsigned& next_pack_id
     );
 
 public:
@@ -3574,7 +3624,7 @@ public:
   /// then 1 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
   /// </param>
   /// <param name="sector_control_net_points">
-  /// Either sector_control_net_points is nullptr or sector_control_net_points[] is an array
+  /// Either sector_control_net_points[] is nullptr or sis an array
   /// of ON_SubDVertexQuadSector::SectorVertexCount(center_vertex_tag,sector_face_count) points
   /// that are used to initialize the vertex control net points.
   /// sector_control_net_points[0] = center vertex control net point.
@@ -3585,14 +3635,23 @@ public:
   /// then the sector_control_net_points[ON_SubDVertexQuadSector::SectorVertexCount(center_vertex_tag,sector_face_count)-1]
   /// is the final crease edge outer control net point.
   /// </param>
+  /// <param name="center_vertex_sharpness">
+  /// When the original center vertex is a crease vertex with two sectors,
+  /// center_vertex_sharpness must be the orignal value of vertex->VertexShaprness()
+  /// (when working with the sector that has the smallest maximum edge end shaprness
+  /// at the center vertex). In all other cases, the value can be zero because the 
+  /// subdivisions required to remove sharpness from the sector's edges will properly 
+  /// subdividie the center vertex.
+  /// </param>
   /// <param name="center_edge_sharpnesses">
-  /// Either center_edge_sharpnesses is nullptr or center_edge_sharpnesses[] is an array 
+  /// Either center_edge_sharpnesses is nullptr or is an array 
   /// of ON_SubDVertexQuadSector::CenterVertexEdgeCount(center_vertex_tag,sector_face_count)
   /// edge sharpnesses oriented with center_edge_sharpnesses[ei].EndSharpness(0) being the edge sharpness at the center vertex.
   /// </param>
   /// <returns>True if successful. False if input is not valid.</returns>
   bool Initialize(
     ON_SubDVertexTag center_vertex_tag,
+    double center_vertex_sharpness,
     unsigned sector_face_count,
     const ON_3dPoint* sector_control_net_points,
     const ON_SubDEdgeSharpness* center_edge_sharpnesses
@@ -3630,15 +3689,72 @@ public:
   /// then the sector_control_net_points[ON_SubDVertexQuadSector::SectorVertexCount(vertex_tag,sector_face_count)-1]
   /// is the final crease edge outer control net point.
   /// </param>
+  /// <param name="center_vertex_sharpness">
+  /// When the original center vertex is a crease vertex with two sectors,
+  /// center_vertex_sharpness must be the orignal value of vertex->VertexShaprness()
+  /// (when working with the sector that has the smallest maximum edge end shaprness
+  /// at the center vertex). In all other cases, the value can be zero because the 
+  /// subdivisions required to remove sharpness from the sector's edges will properly 
+  /// subdividie the center vertex.
+  /// </param>
   /// <returns>True if successful. False if input is not valid.</returns>
   bool Initialize(
     ON_SubDVertexTag vertex_tag,
+    double center_vertex_sharpness,
     unsigned sector_face_count,
     const ON_SimpleArray<ON_3dPoint>& sector_control_net_points
   );
 
+  /// <summary>
+  /// Initialize this ON_SubDVertexQuadSector topology and component tags
+  /// assuming the the smooth edges attached to the center vertex have
+  /// a smooth outer ring vertex.
+  /// </summary>
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then sector_edge_count = 3*sector_face_count.
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then sector_edge_count = 1+3*sector_face_count.
+  /// The sector's vertex_count = 1 + sector_edge_count + sector_face_count.
+  /// </summary>
+  /// <param name="center_vertex_tag">
+  /// The center_vertex_tag must be one of ON_SubDVertexTag::Smooth,
+  ///  ON_SubDVertexTag::Dart, ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner.
+  /// </param>
+  /// <param name="sector_face_count">
+  /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// then 2 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then 1 &lt;= sector_face_count &lt;= ON_SubDVertex::MaximumFaceCount.
+  /// </param>
+  /// <param name="sector_control_net_points">
+  /// Either sector_control_net_points is empty or is an array
+  /// of ON_SubDVertexQuadSector::SectorVertexCount(center_vertex_tag,sector_face_count) points
+  /// that are used to initialize the vertex control net points.
+  /// sector_control_net_points[0] = center vertex control net point.
+  /// sector_control_net_points[1] = first edge outer vertex control net point.
+  /// sector_control_net_points[2] = first quad face outer vertex control net point.
+  /// The subsequent sector_control_net_points[] continue alternate between outer edge and outer quad face control net points.
+  /// If center_vertex_tag is ON_SubDVertexTag::Crease or ON_SubDVertexTag::Corner,
+  /// then the sector_control_net_points[ON_SubDVertexQuadSector::SectorVertexCount(center_vertex_tag,sector_face_count)-1]
+  /// is the final crease edge outer control net point.
+  /// </param>
+  /// <param name="center_vertex_sharpness">
+  /// When the original center vertex is a crease vertex with two sectors,
+  /// center_vertex_sharpness must be the orignal value of vertex->VertexShaprness()
+  /// (when working with the sector that has the smallest maximum edge end shaprness
+  /// at the center vertex). In all other cases, the value can be zero because the 
+  /// subdivisions required to remove sharpness from the sector's edges will properly 
+  /// subdividie the center vertex.
+  /// </param>
+  /// <param name="center_edge_sharpnesses">
+  /// Either center_edge_sharpnesses is empty or is an array 
+  /// of ON_SubDVertexQuadSector::CenterVertexEdgeCount(center_vertex_tag,sector_face_count)
+  /// edge sharpnesses oriented with center_edge_sharpnesses[ei].EndSharpness(0) being the edge sharpness at the center vertex.
+  /// </param>
+  /// <returns>True if successful. False if input is not valid.</returns>
   bool Initialize(
     ON_SubDVertexTag vertex_tag,
+    double center_vertex_sharpness,
     unsigned sector_face_count,
     const ON_SimpleArray<ON_3dPoint>& sector_control_net_points,
     const ON_SimpleArray<ON_SubDEdgeSharpness>& center_edge_sharpnesses
@@ -3680,9 +3796,11 @@ public:
   /// </param>
   /// <returns>True if successful. False if input is not valid.</returns>
   bool InitializeFromSubdividedSectorComponents(
+    double center_vertex_sharpness,
     const ON_SimpleArray<ON_SubDComponentPtr>& sector_components
   );
   bool InitializeFromSubdividedSectorComponents(
+    double center_vertex_sharpness,
     const ON_SubDComponentPtr* sector_components,
     size_t sector_components_count
   );
@@ -3691,9 +3809,33 @@ public:
     ON_SimpleArray<ON_3dPoint>& sector_control_net_points
   ) const;
 
-  bool SetCenterVertexTag(ON_SubDVertexTag center_vertex_tag);
+  bool SetCenterVertexTagAndCenterVertexEdgesTags(ON_SubDVertexTag center_vertex_tag);
 
-  double MaximumCenterVertexEdgeEndSharpness() const;
+  bool SetCenterVertexSharpness(double center_vertex_sharpness);
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <returns>
+  /// The maximum sharpness at any end of any edge in the sector
+  /// that is attached to the center vertex. 
+  /// NOTE WELL: This can be value can be greater than or less 
+  /// than this->CenterVertexSharpness().
+  /// </returns>
+  double MaximumRadialEdgeEndSharpness() const;
+
+  /// <returns>
+  /// The sharpness of the center vertex.
+  /// NOTE WELL: This can be value can be greater than or less 
+  /// than this->MaximumRadialEdgeEndSharpness().
+  /// </returns>
+  double CenterVertexSharpness() const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <returns>The larger of MaximumRadialEdgeEndSharpness() and CenterVertexSharpness.</returns>
+  double MaximumSharpness() const;
 
   /// <summary>
   /// Subdivide the vertex sector.
@@ -3710,7 +3852,7 @@ public:
   /// <returns>
   /// If successful, true is returned. Otherwise false is returned.
   /// </returns>
-  bool SubdivideUntilEdgeSharpnessIsZero();
+  bool SubdivideUntilSharpnessIsZero();
 
   const ON_SubDVertex* CenterVertex() const;
 
@@ -3796,7 +3938,15 @@ public:
   ON_SubDComponentPtr* m_r = nullptr;
 
   double m_sector_coefficient = ON_DBL_QNAN;
+
+  // Maximum vale of any edge sharpness at any end for the
+  // edges in this sector.
+  // 
   mutable double m_maximum_edge_end_sharpness = ON_DBL_QNAN;
+
+  // Maximum value of any edges end sharpness at this vertex
+  // for every edge attached to this vertex (in any sector).
+  mutable double m_center_vertex_sharpness = ON_DBL_QNAN;
 
 private:
   // number of faces in the sector

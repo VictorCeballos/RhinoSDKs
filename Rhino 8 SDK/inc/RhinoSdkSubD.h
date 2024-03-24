@@ -866,8 +866,12 @@ public:
       true to include face pack id near the face centroids
     bFacePackIdColors- [in]
       true to show face pack groups using per face colors.
-    bSectorWeights - [in]
-      true to label sector weights
+    bSectorCoefficients - [in]
+      true to label sector coefficients
+    bEdgeSharpnesses - [in]
+      true to label edge sharpnesses for sharp edges
+    bAllEdgesSharpnesses - [in]
+      true to label edge sharpnesses for all edges
     bNetAsLines - [in]
       true to add a rhino line curve object for each edge.
   Returns:
@@ -882,7 +886,7 @@ public:
     bool bFaceLabels,
     bool bFacePackIdLabels,
     bool bFacePackIdColors,
-    bool bSectorWeights,
+    bool bSectorCoefficients,
     bool bNetAsLines
   );
 
@@ -897,7 +901,24 @@ public:
     bool bFacePackIdColors,
     bool bSymmetryMotifLabels,
     bool bSymmetryMotifColors,
-    bool bSectorWeights,
+    bool bSectorCoefficients,
+    bool bNetAsLines
+  );
+
+  static unsigned int LabelSubDNet(
+    unsigned int rhino_doc_sn,
+    int layer_index,
+    const ON_SubD* subd,
+    bool bVertexLabels,
+    bool bEdgeLabels,
+    bool bFaceLabels,
+    bool bFacePackIdLabels,
+    bool bFacePackIdColors,
+    bool bSymmetryMotifLabels,
+    bool bSymmetryMotifColors,
+    bool bSectorCoefficients,
+    bool bEdgeSharpnesses,
+    bool bAllEdgesSharpnesses,
     bool bNetAsLines
   );
 

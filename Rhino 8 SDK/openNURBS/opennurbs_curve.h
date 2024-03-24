@@ -990,7 +990,8 @@ public:
   Returns:
     Number of intersection events appended to x.
   Remarks:
-    Overlaps are not reported.
+    Overlaps were are not reported. 
+    Overlaps are now reported as of Rhino 8.0
   */
   virtual
   int IntersectSelf( 
@@ -1012,7 +1013,7 @@ public:
     overlap_tolerance - [in] If t1 and t2 are parameters of this 
       curve's intersection events and the distance from curve(t) to 
       curveB is <= overlap_tolerance for every t1 <= t <= t2,
-      then the event will be returened as an overlap event.
+      then the event will be returned as an overlap event.
       If the input overlap_tolerance <= 0.0, then 
       intersection_tolerance*2.0 is used,  Otherwise, overlap
       tolerance must be >= intersection_tolerance.

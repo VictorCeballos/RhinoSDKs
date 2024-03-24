@@ -577,6 +577,7 @@ public:
   bool IsDirectoryInstall() const;
 
   bool IsPackageManagerPlugIn() const;
+  static bool IsPackageManagerPlugIn(const wchar_t* path);
 
 protected:
   friend class CRhPlugInManager;

@@ -357,7 +357,7 @@ public:
 
   /*
   Returns:
-    True if testure information should be saved in the file.
+    True if texture information should be saved in the file.
   Remarks:
     The default is false.
   */

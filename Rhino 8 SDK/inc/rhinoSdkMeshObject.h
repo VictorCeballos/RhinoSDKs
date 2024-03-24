@@ -36,6 +36,7 @@ public:
   CRhinoMeshObject& operator=(const CRhinoMeshObject&); // copies source object UUID
 
   void SetMesh( ON_Mesh* ); // ~CRhinoMeshObject() will delete this mesh
+  void SetMesh(std::shared_ptr<const ON_Mesh>);
   const ON_Mesh* Mesh() const;
 
   //Prefer this to Mesh()
@@ -455,12 +456,12 @@ Returns:
   CRhinoCommand::failure         unable to create meshes
 */
 RHINO_SDK_FUNCTION
-CRhinoCommand::result RhinoMeshObjects( 
-          const ON_SimpleArray< const CRhinoObject* >& objects,
-          ON_MeshParameters& mp,
-          int& ui_style,
-          ON_ClassArray< CRhinoObjectMesh >& meshes
-          );
+CRhinoCommand::result RhinoMeshObjects(
+  const ON_SimpleArray<const CRhinoObject*>& objects,
+  ON_MeshParameters& mp,
+  int& ui_style,
+  ON_ClassArray<CRhinoObjectMesh>& meshes
+);
 
 /*
 Description:
@@ -498,13 +499,24 @@ Returns:
   CRhinoCommand::failure         unable to create meshes
 */
 RHINO_SDK_FUNCTION
-CRhinoCommand::result RhinoMeshObjects( 
-          const ON_SimpleArray< const CRhinoObject* >& objects,
-          ON_MeshParameters& mp,
-          const ON_Xform& xform,
-          int& ui_style,
-          ON_ClassArray< CRhinoObjectMesh >& meshes
-          );
+CRhinoCommand::result RhinoMeshObjects(
+  const ON_SimpleArray<const CRhinoObject*>& objects,
+  ON_MeshParameters& mp,
+  const ON_Xform& xform,
+  int& ui_style,
+  ON_ClassArray<CRhinoObjectMesh>& meshes
+);
+
+RHINO_SDK_FUNCTION
+CRhinoCommand::result RhinoMeshObjects(
+  const ON_SimpleArray<const CRhinoObject*>& objects,
+  ON_MeshParameters& mp,
+  const ON_Xform& xform,
+  int& ui_style,
+  ON_ClassArray<CRhinoObjectMesh>& meshes,
+  bool bUseWorkerThread
+);
+
 
 typedef bool (*CUSTOM_MESH_HANDLER_FUNC)(const CRhinoObject&, ON_SimpleArray<ON_Mesh*>& aMeshes);
 ON_DEPRECATED_MSG("Use RhinoRegisterCustomMeshHandler2") RHINO_SDK_FUNCTION
@@ -726,14 +738,24 @@ Returns:
   CRhinoCommand::failure         unable to create meshes
 */
 RHINO_SDK_FUNCTION
-CRhinoCommand::result 
-RhinoMeshObjects( 
-    const ON_SimpleArray< const CRhinoObject* >& objects,
-    ON_MeshParameters& mp,
-    const ON_Xform& xform,
-    class CRhinoMeshObjectsUI& ui,
-    ON_ClassArray< CRhinoObjectMesh >& meshes
-    );
+CRhinoCommand::result RhinoMeshObjects( 
+  const ON_SimpleArray<const CRhinoObject*>& objects,
+  ON_MeshParameters& mp,
+  const ON_Xform& xform,
+  class CRhinoMeshObjectsUI& ui,
+  ON_ClassArray<CRhinoObjectMesh>& meshes
+  );
+
+RHINO_SDK_FUNCTION
+CRhinoCommand::result RhinoMeshObjects(
+  const ON_SimpleArray<const CRhinoObject*>& objects,
+  ON_MeshParameters& mp,
+  const ON_Xform& xform,
+  class CRhinoMeshObjectsUI& ui,
+  ON_ClassArray<CRhinoObjectMesh>& meshes,
+  bool bUseWorkerThread
+);
+
 
 /*
 Description:
@@ -770,12 +792,11 @@ CRhinoCommand::exit_rhino      user closed Rhino
 CRhinoCommand::failure         unable to create meshes
 */
 RHINO_SDK_FUNCTION
-CRhinoCommand::result
-RhinoMeshObjects(
-const ON_SimpleArray< const CRhinoObject* >& objects,
-ON_MeshParameters& mp,
-class CRhinoMeshObjectsUI& ui,
-  ON_ClassArray< CRhinoObjectMesh >& meshes
+CRhinoCommand::result RhinoMeshObjects(
+  const ON_SimpleArray<const CRhinoObject*>& objects,
+  ON_MeshParameters& mp,
+  class CRhinoMeshObjectsUI& ui,
+  ON_ClassArray<CRhinoObjectMesh>& meshes
   );
 
 /*

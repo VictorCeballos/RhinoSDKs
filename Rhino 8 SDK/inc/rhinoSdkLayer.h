@@ -1060,6 +1060,24 @@ public:
     bool = false // bIgnoreDeleted
     ) const;
 
+  void GetSortedList(
+    bool bIgnoreDeleted,  // Ignore deleted layers
+    bool bIgnoreFiltered, // Ignore filtered layers
+    ON_SimpleArray<const CRhinoLayer*>& sorted_list
+  ) const;
+
+  /*
+  Description:
+    Sort layers, in the layer table, by their name in either ascending or descending order.
+    This function sorts layers in the same manner as Rhino's Layers panel.
+  Parameters:
+    bAscending - [in] Sort in ascending (true) or descending (false) order.
+  Remarks:
+    This function changes the value of CRhinoLayer::m_sort_index.
+    It does not change the index order of layers in the layer table.
+  */
+  void SortByLayerName(bool bAscending);
+
   /*
   Description:
     Gets unused layer name used as default when creating new layers.

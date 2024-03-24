@@ -105,6 +105,10 @@ public:
 	*/
 	virtual const CRhRdkMaterial* MaterialFromId(ON__UINT32 id) const;
 
+	//Slower than MaterialFromId - used only when you do not have access to the change queue ID, but
+	//only the original instance Id
+	const CRhRdkMaterial* MaterialFromOriginalInstanceId(const ON_UUID& id) const;
+
 	/**
 	Return the CRhRdkTexture for given hash.
 	\param id the hash of the texture.
@@ -112,12 +116,20 @@ public:
 	*/
 	virtual const CRhRdkTexture* TextureFromId(ON__UINT32 id) const;
 
+	//Slower than TextureFromId - used only when you do not have access to the change queue ID, but
+	//only the original instance Id
+	const CRhRdkTexture* TextureFromOriginalInstanceId(const ON_UUID& id) const;
+
 	/**
 	Return the CRhRdkEnvironment for given hash.
 	\param id the hash of the environment.
 	\return \e CRhRdkEnvironment if found, else \e nullptr.
 	*/
 	virtual const CRhRdkEnvironment* EnvironmentFromId(ON__UINT32 id) const;
+
+	//Slower than EnvironmentFromId - used only when you do not have access to the change queue ID, but
+	//only the original instance Id
+	const CRhRdkEnvironment* EnvironmentFromOriginalInstanceId(const ON_UUID& id) const;
 
 	virtual const CRhinoObject* ObjectFromId(const ON_UUID& id) const;
 
@@ -311,6 +323,7 @@ public:
 		MappingChannels();
 		MappingChannels(const ON_MappingRef*, const CRhinoTextureMappingTable*);
 		MappingChannels(const RhRdk::CustomRenderMeshes::IRenderMeshes::MappingChannels&);
+		MappingChannels(const MappingChannels&, const RhRdk::CustomRenderMeshes::IRenderMeshes::MappingChannels&);
 		MappingChannels(const MappingChannels&) = delete;
 		~MappingChannels();
 
@@ -420,6 +433,24 @@ public:
 		/** Returns a pointer to the decal set for this object. Valid while ApplyChanges is in progress.
 			OBSOLETE - Returns null. Decals are now available on ObjectAttributes. */
 		const CRhRdkDecalIterator* DecalIterator(void) const;
+
+		class RHRDK_SDK AncestryRecord
+		{
+		public:
+			AncestryRecord(const ON_UUID& r, const ON_UUID& d, const ON_3dmObjectAttributes& ra, const ON_Xform& t);
+			AncestryRecord(AncestryRecord&&);		//Move - this is a move only class
+			~AncestryRecord();
+		public:
+			const ON_UUID& ReferenceId(void) const;
+			const ON_3dmObjectAttributes& ReferenceAttributes(void) const;
+			const ON_UUID& DefinitionId(void) const;
+			const ON_Xform& Transform(void) const;
+		private:
+			struct Impl;
+			std::unique_ptr<Impl> m_pImpl;
+		};
+
+		std::vector<AncestryRecord> InstanceAncestry(void) const;
 
 	private:
 		class Impl;

@@ -1102,6 +1102,60 @@ int RhinoJoinSubDs(
 Description:
   Joins the Breps in the input array at any overlapping edges to form
   as few as possible resulting Breps.
+  There may be more than one Brep in the output array.
+Parameters:
+  input_breps     [in] Array of Breps to join.
+  tolerance       [in] 3d distance tolerance for detecting overlapping edges.
+                       When in doubt, use the document's model absolute toleance.
+  angle_tolerance [in] Angle tolerance, in radians, used for merging edges.
+                       When in doubt, use the document's model angle toleance.
+  output_breps    [out] Empty array to return results of the join.
+Returns:
+  true if any edges were joined.
+Remarks:
+  Memory for the output Breps is allocated and becomes the responsibility of the caller.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoJoinBreps(
+  const ON_SimpleArray<const ON_Brep*>& input_breps,
+  double tolerance,
+  double angle_tolerance,
+  ON_SimpleArray<ON_Brep*>& output_breps
+);
+
+/*
+Description:
+  Joins the Breps in the input array at any overlapping edges to form
+  as few as possible resulting Breps.
+  There may be more than one Brep in the output array.
+Parameters:
+  input_breps     [in] Array of Breps to join.
+  tolerance       [in] 3d distance tolerance for detecting overlapping edges.
+                       When in doubt, use the document's model absolute toleance.
+  angle_tolerance [in] Angle tolerance, in radians, used for merging edges.
+                       When in doubt, use the document's model angle toleance.
+  output_breps    [out] Empty array to return results of the join.
+  output_key      [out] Array of integer arrays, one for each joined result, 
+                        containing all input Brep indices that went into making it.
+Returns:
+  true if any edges were joined.
+Remarks:
+  Memory for the output Breps is allocated and becomes the responsibility of the caller.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoJoinBreps(
+  const ON_SimpleArray<const ON_Brep*>& input_breps,
+  double tolerance,
+  double angle_tolerance,
+  ON_SimpleArray<ON_Brep*>& output_breps,
+  ON_ClassArray<ON_SimpleArray<int>>& output_key
+);
+
+/*
+Description:
+  OBSOLETE - USE THE VERSION ABOVE
+  Joins the Breps in the input array at any overlapping edges to form
+  as few as possible resulting Breps.
   There may be more than one Brep in the result array
 Parameters:
   input_breps  [in] Array of Breps to join
@@ -1432,6 +1486,30 @@ bool RhinoFitCircleToPoints(
   int point_count,
   const ON_3dPoint* points,
   ON_Circle& circle
+);
+
+/*
+Description:
+  Fits a sphere through an array of points.
+Parameters:
+  points [in] - The points through which to fit.
+  sphere [out] - The resulting sphere.
+Returns:
+  true if successful, false otherwise.
+Remarks:
+  Finds a best-fit sphere through the points.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoFitSphereToPoints(
+  const ON_SimpleArray<ON_3dPoint>& point_array,
+  ON_Sphere& sphere
+);
+
+RHINO_SDK_FUNCTION
+bool RhinoFitSphereToPoints(
+  int point_count,
+  const ON_3dPoint* points,
+  ON_Sphere& sphere
 );
 
 /*
@@ -5493,6 +5571,29 @@ ON_NurbsCurve* RhinoMakeRadiusSpline(
 
 /*
 Description:
+  Finds a curve by offsetting an existing curve tangent to a surface.
+  The caller is responsible for ensuring that the input curve lies
+  on the input surface.
+Parameters:
+  pSrf   [in] - Surface from which tangents are calculated.
+  pCrv   [in] - 3d curve lying on the surface along which tangents are calculated.
+  height [in] - offset distance (distance from surface to result curve).
+Return:
+  ON_NurbsCurve* pointing to offset curve at distance height from the surface.
+Remarks:
+  The offset curve is interpolated through a small number of points so if the
+  surface is irregular or complicated, the result will not be a very accurate offset.
+  THE CALLER IS RESPONSIBLE FOR DESTROYING THE OUTPUT CURVE.
+*/
+RHINO_SDK_FUNCTION
+ON_NurbsCurve* RhinoOffsetCurveTangent(
+  const ON_Surface* pSrf,
+  const ON_NurbsCurve* pNC,
+  double height
+);
+
+/*
+Description:
   Creates polyline curve outlines from meshes.
 Parameters:
   InMeshes   [in] - The meshes to outline.
@@ -8035,8 +8136,8 @@ Description:
   on a curve at which the sign of the curvature (i.e., the concavity) changes.
   The curvature at these locations is always 0.
 Parameters:
-  curve - [in] The curve to evaluate.
-  points- [out] The inflection points.
+  curve  - [in] The curve to evaluate.
+  points - [out] The inflection points.
 Returns:
   true if successful, false otherwise.
 */
@@ -8048,12 +8149,32 @@ bool RhinoCurveInflectionPoints(
 
 /*
 Description:
+  Calculates a curve's inflection points. An inflection point is a location
+  on a curve at which the sign of the curvature (i.e., the concavity) changes.
+  The curvature at these locations is always 0.
+Parameters:
+  curve      - [in] The curve to evaluate.
+  points     - [out] The inflection points.
+  parameters - [out] The inflection parameters.
+Returns:
+  true if successful, false otherwise.
+*/
+
+RHINO_SDK_FUNCTION
+bool RhinoCurveInflectionPoints(
+  const ON_Curve& curve,
+  ON_SimpleArray<ON_3dPoint>& points,
+  ON_SimpleArray<double>& parameters
+);
+
+/*
+Description:
   Calculates a curve's maximum curvature points. The maximum curvature points
   identify where the curvature starts to decrease in both directions
   from the points.
 Parameters:
-  curve - [in] The curve to evaluate.
-  points- [out] The minimum curvature radius points.
+  curve  - [in] The curve to evaluate.
+  points - [out] The minimum curvature radius points.
 Returns:
   true if successful, false otherwise.
 */
@@ -8061,6 +8182,25 @@ RHINO_SDK_FUNCTION
 bool RhinoCurveMaxCurvaturePoints(
   const ON_Curve& curve,
   ON_SimpleArray<ON_3dPoint>& points
+);
+
+/*
+Description:
+  Calculates a curve's maximum curvature points. The maximum curvature points
+  identify where the curvature starts to decrease in both directions
+  from the points.
+Parameters:
+  curve      - [in] The curve to evaluate.
+  points     - [out] The minimum curvature radius points.
+  parameters - [out] TThe minimum curvature parameters.
+Returns:
+  true if successful, false otherwise.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoCurveMaxCurvaturePoints(
+  const ON_Curve& curve,
+  ON_SimpleArray<ON_3dPoint>& points,
+  ON_SimpleArray<double>& parameters
 );
 
 /*
@@ -8580,3 +8720,28 @@ private:
   CRhinoSurfaceFillet();//Not called
 };
 
+/*
+Description:
+  Finds a line segment between a pair of curves such that the line segment
+  is either tangent or perpendicular to each of the curves.
+ Parameters:
+  curve0  [in] - The first curve.
+  curve1  [in] - The second curve.
+  bPerp0  [in] - Find line perpendicular to (true) or tangent to (false) curve0.
+  bPerp1  [in] - Find line Perpendicular to (true) or tangent to (false) curve1.
+  abs_tol [in] - The active document's model absolute tolerance.
+  t0      [in/out] - Parameter value of point on curve0. Seed value at input and solution at output.
+  t1      [in/out] - Parameter value of point on curve1. Seed value at input and solution at output.
+Returns:
+  true on success, false on failure.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoGetTanPerpPoint(
+  const ON_Curve& curve0,
+  const ON_Curve& curve1,
+  bool bPerp0,
+  bool bPerp1,
+  double abs_tol,
+  double& t0,
+  double& t1
+);

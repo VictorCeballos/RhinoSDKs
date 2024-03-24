@@ -268,8 +268,14 @@ bool RhinoMeshBooleanUnion(
         ON_SimpleArray<const ON_3dmObjectAttributes*>* OuputAttributeArray = 0
         );
 
+class CRhMeshBooleanOptionsPrivate
+{
+public:
+  ON_SimpleArray<unsigned>* m_firstNewlyAddedFace;
+};
+
 /// <summary>
-/// 
+/// Contains additional information about mesh booleans. This class can have more methods added.
 /// </summary>
 class RHINO_SDK_CLASS CRhinoMeshBooleanOptions
 {
@@ -279,7 +285,15 @@ public:
   ON_ProgressReporter* m_reporter = nullptr;
   bool m_ngons = true;
 
-  ~CRhinoMeshBooleanOptions() {};
+  ~CRhinoMeshBooleanOptions();
+  CRhinoMeshBooleanOptions();
+
+  /// <summary>
+  /// Retuns a list with the first index, the first index of the first newly added mesh face,
+  /// and as secondo index, the count of new faces after that index.
+  /// </summary>
+  /// <param name="list">The indices of the new faces, as addessed in the summary.</param>
+  void RequestFirstNewlyAddedFacesList(ON_SimpleArray<unsigned>* list);
 
 private:
   class CRhMeshBooleanOptionsPrivate* m_private = nullptr;
@@ -1069,6 +1083,9 @@ public:
 
   const ON_Linetype* GetLinetype() const;
   void SetLinetype(const ON_Linetype* linetype);
+
+  void SetDocument(unsigned int serialNumber);
+  unsigned int DocumentSerialNumber() const;
 public:
   double m_dRadius;        // The radius of the pipe (minimum value 0.0001).
   int m_iSegments;         // The number of segments in the pipe (minimum value 2).
@@ -1082,7 +1099,8 @@ public:
 
 private:
   ON_Linetype* m_linetype = nullptr;
-  char __padding[56]; // Reserved space for future modifications.
+  unsigned int m_doc_sn = 0;
+  char __padding[52]; // Reserved space for future modifications.
 };
 
 /*

@@ -15,6 +15,9 @@
 
 // This file checks that compile time defines are correctly set.
 // If something incorrect is defined, it will call #error.
+#if !defined(ON_RUNTIME_LINUX) && defined(__linux__)
+#define ON_RUNTIME_LINUX
+#endif
 
 #if !defined(ON_RUNTIME_APPLE) && !defined(ON_RUNTIME_LINUX)
 // These checks are very specific to Windows Rhino
@@ -54,7 +57,7 @@
 #endif
 
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(ON_CMAKE_BUILD)
 
 #if defined(RHINO_WIN32_SPECIAL_CASE)
 #if defined(_M_IA64) || defined(_M_X64)

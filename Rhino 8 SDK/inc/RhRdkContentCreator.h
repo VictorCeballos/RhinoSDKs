@@ -27,9 +27,14 @@ protected:
 	virtual const CRhRdkContentArray* OriginalContent(void) const = 0;
 	virtual bool CreateNewContent(CRhRdkContentArrayNC& aContentOut, const CRhRdkContent* pOldContent, const CRhRdkContent* pParentContent, const wchar_t* wszChildSlotName) const = 0;
 
+public:
+	/*virtual*/ bool AutoEditChild(void) const; // = 0; [SDK_UNFREEZE]
+
 protected:
 	const CRhRdkDocument* RdkDocument(void) const;
 	void SetErrorString(const wchar_t* wsz) const;
+
+	virtual void* EVF(const wchar_t*, void*) override;
 
 private:
 	class CImpl;
@@ -108,6 +113,7 @@ public:
 protected:
 	virtual bool IsCopy(void) const override;
 	virtual const CRhRdkContentArray* OriginalContent(void) const override;
+	virtual void* EVF(const wchar_t*, void*) override;
 
 protected:
 	const CRhRdkContentArray& Content(void) const;

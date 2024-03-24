@@ -6,10 +6,12 @@
 
 /** \class CRhRdkSunDialog
 
-	This class is a wrapper around a modal sun dialog.
+	This class is a wrapper around a modal sun dialog. It is only used internally.
+	SDK clients should not attempt to use this as it requires internal RDK classes
+	to be used successfully. [SDK_UNFREEZE] Remove this from the public SDK.
 
 */
-class RHRDK_SDK CRhRdkSunDialog : public CRhRdkObject
+class RDK_DEPRECATED_CLASS RHRDK_SDK CRhRdkSunDialog : public CRhRdkObject
 {
 public:
 	CRhRdkSunDialog(HWND pParent=NULL);
@@ -164,3 +166,26 @@ RHRDK_SDK bool RhRdkIsSunLight(const ON_Light& light);
 RDK_DEPRECATED RHRDK_SDK double SunAltitudeFromParameters(double dLatitude, double dLongitude, double dTimeZoneHours, int iDaylightMinutes, int iYear, int iMonth, int iDay, double dHours, bool bFast);
 RDK_DEPRECATED RHRDK_SDK double SunJulianDay(double dTimeZoneHours, int iDaylightMinutes, int iYear, int iMonth, int iDay, double dHours);
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum // Flags for showing_sections parameter of RhRdkModalEditSun.
+{
+	rdk_sun_ss_sun_options   = 0x00000001, // Sun Options section.
+	rdk_sun_ss_skylight      = 0x00000002, // Skylight section.
+	rdk_sun_ss_sun_position  = 0x00000004, // Sun Position section.
+	rdk_sun_ss_date_and_time = 0x00000008, // Date and Time section (only visible if manual control is off).
+	rdk_sun_ss_location      = 0x00000010, // Location section (only visible if manual control is off).
+	rdk_sun_ss_settings      = 0x00000020, // Settings section.
+	rdk_sun_ss_all           = 0x000000FF, // All sections.
+	rdk_sun_ss_force_32_bit  = 0xFFFFFFFF, // For future compatibility.
+};
+
+enum // Flags for section_options parameter of RhRdkModalEditSun.
+{
+	rdk_sun_so_normal       = 0x00000000, // Normal UI with no specializations.
+	rdk_sun_so_lean_ui      = 0x00000001, // Lean UI. Currently this only hides the Time Zone control on the Location section.
+	rdk_sun_so_no_shadow    = 0x00000002, // Suppresses the day/night shadow on the map control.
+	rdk_sun_so_force_32_bit = 0xFFFFFFFF, // For future compatibility.
+};
+
+RHRDK_SDK bool RhRdkModalEditSun(ON_Sun& sun);
+RHRDK_SDK bool RhRdkModalEditSun(ON_Sun& sun, ON__UINT32 showing_sections, ON__UINT32 section_options);

@@ -74,7 +74,7 @@ public:
 	/** Values for OnRenderingSettingsChanged 'info' parameter. */
 	enum rendering_info
 	{
-		ri_save_support_files    = 1,  // Save support files in 3dm file checkbox changed.
+		ri_save_support_files    = 1,  // OBSOLETE; not used.
 		ri_dithering             = 2,  // Dithering method changed.
 		ri_gamma                 = 3,  // OBSOLETE; see ri_gamma_linear_workflow.
 		ri_use_linear_workflow   = 4,  // OBSOLETE; see ri_gamma_linear_workflow.

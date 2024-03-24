@@ -15,15 +15,17 @@
 // Post rendering features that make up all possible post renderables...
 enum ERenderOverlayFeatures
 { 
-  ROF_POINTS       = 0x00000001,
-  ROF_LIGHTS       = 0x00000002,
-  ROF_MESHWIRES    = 0x00000004,
-  ROF_ISOS         = 0x00000008,
-  ROF_EDGES        = 0x00000010,
-  ROF_TEXT         = 0x00000020, 
-  ROF_CURVES       = 0x00000040, 
-  ROF_ANNOTATIONS  = 0x00000080,
-  ROF_SUBDWIRES    = 0x00000100,
+  ROF_POINTS            = 0x00000001,
+  ROF_LIGHTS            = 0x00000002,
+  ROF_MESHWIRES         = 0x00000004,
+  ROF_ISOS              = 0x00000008,
+  ROF_EDGES             = 0x00000010,
+  ROF_TEXT              = 0x00000020, 
+  ROF_CURVES            = 0x00000040, 
+  ROF_ANNOTATIONS       = 0x00000080,
+  ROF_SUBDWIRES         = 0x00000100,
+  ROF_SECTION_FILL      = 0x00000200,
+  ROF_SECTION_BOUNDARY  = 0x00000400,
 };
 
 // Rendering overlay class that creates "maskable" renderings (known as Overlays), 
@@ -209,6 +211,10 @@ protected:
   void SetFeatureAttrs(unsigned int  nFeatures, CDisplayPipelineAttributes& Attrs, bool bState);
 
   bool CreateFeatures(CRhinoDisplayPipeline_OGL&, CDisplayPipelineAttributes&, unsigned int nFeatures);
+  bool CreateFeatures(CRhinoDisplayPipeline&, CDisplayPipelineAttributes&, unsigned int nFeatures);
+
+  void SetFillOrBoundaryRequest(bool);
+  bool FillOrBoundaryRequested(void) const;
 
 private:
   class COverlay

@@ -1562,9 +1562,14 @@ public:
     bool include_page_views = true
   );
 
+  ON_DEPRECATED_MSG("Should have been const")
   bool FindView(const wchar_t* title,
     ON_3dmView& view,
     CRhinoView::ViewTypeFilter view_types);
+    
+  bool FindView(const wchar_t* title,
+      ON_3dmView& view,
+      CRhinoView::ViewTypeFilter view_types) const;
 
   CRhinoView* ActiveView() const;
 
@@ -4949,8 +4954,8 @@ private:
   ON_SimpleArray<ON_Plane> m_plane_stack;
   int m_plane_stack_index;
 
-#if defined (ON_RUNTIME_APPLE)
-  class CRhGLSceneManager* m_pSceneManager;
+#if defined (ON_RUNTIME_APPLE) && !defined (ON_RUNTIME_APPLE_IOS)
+  class CRhGLSceneManager* m_pSceneManager = nullptr;
 #endif
 
   // Helper functions used by CRhinoDoc::DeleteObject,

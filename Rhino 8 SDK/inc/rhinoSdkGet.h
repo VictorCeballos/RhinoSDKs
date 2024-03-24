@@ -628,7 +628,7 @@ public:
               {
                 //user typed "Radius" - manually prompt for new number
                 CRhinoGetNumber gn;
-                gn.SetCommandPrompt(RHSTR("Radius"));
+                gn.SetCommandPrompt(RhLocalizeString( "Radius", 56330));
                 gn.SetDefault(r);
                 gn.GetNumber();
                 if ( gn.Result() == CRhinoGet::number )
@@ -1556,6 +1556,12 @@ public:
       Set the max number of concurrent tasks to run.
   */
   void SetMaxConcurrentTasks(int);
+
+  /*
+    Description:
+      Sets whether escape cancels the task while another application has focus.
+  */
+  void SetAllowCancelWhileAnotherApplicationHasFocus(bool b);
 
 private:
   class Private;

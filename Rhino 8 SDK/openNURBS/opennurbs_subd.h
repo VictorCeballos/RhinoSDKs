@@ -387,7 +387,20 @@ public:
   /// </summary>
   static const ON_SubDEdgeSharpness Nan;
 
-
+  /// <summary>
+  /// Create a text string describing the sharpness as a percentage.
+  /// If the sharpness is constant, and single percentage is returned.
+  /// If the sharpness is variable, percentage range returned.
+  /// If the sharpness is not valid, a warning sign is returned.
+  /// </summary>
+  /// <param name="bOrderMinToMax">
+  /// If the sharpness is not constant and bOrderMinToMax is true, then
+  /// the string has the format min%-max%. 
+  /// If the sharpness is not constant and bOrderMinToMax is false, then
+  /// the string has the format EndSharpness(0)%-EndSharpness(1)%. 
+  /// </param>
+  /// <returns>A string describing the sharpness as a percentage range.</returns>
+  const ON_wString ToPercentageText(bool bOrderMinToMax) const;
 
   /// <summary>
   /// Create a text string describing the sharpness as a percentage.
@@ -408,27 +421,11 @@ public:
   /// <param name="sharpness"></param>
   /// <param name="crease_percentage"></param>
   /// <returns>
-  /// If 0 &lt;= sharpenss &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpenss/ON_SubDEdgeSharpness::MaximumValue is returned.
-  /// If sharpenss = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
+  /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpness/ON_SubDEdgeSharpness::MaximumValue is returned.
+  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
   /// Otherwise ON_DBL_QNAN is returned.
   /// </returns>
   static double ToPercentage(double sharpness, double crease_percentage);
-
-  /// <summary>
-  /// Create a text string describing the sharpness as a percentage.
-  /// If the sharpenss is constant, and single percentage is returned.
-  /// If the sharpenss is varable, percentage range returned.
-  /// If the sharpness is not valid, a warning sign is returned.
-  /// </summary>
-  /// <param name="bVarableAsIncreasing">
-  /// If the sharpness is not contanst and bVarableMinToMax is true, then
-  /// the string has the format min%-max%. 
-  /// If the sharpness is not contanst and bVarableMinToMax is false, then
-  /// the string has the format EndSharpness(0)%-EndSharpness(1)%. 
-  /// </param>
-  /// <returns>A string describing the sharpness as a percentage range.</returns>
-  const ON_wString ToPercentageText( bool bVarableMinToMax ) const;
-
 
   /// <returns>
   /// If the sharpness value is valid and contant, returns true.
@@ -823,6 +820,14 @@ public:
   /// <returns>Sharpness or ON_DBL_QNAN if end_index is out of range.</returns>
   double EndSharpness(int end_index) const;
 
+  ON_DEPRECATED_MSG("Use the version with a global_vertex_sharpness parameter.")
+  static double VertexSharpness(
+    ON_SubDVertexTag vertex_tag,
+    unsigned sharp_edge_end_count,
+    double maximum_edge_end_sharpness
+  );
+
+
   /// <summary>
   /// Calculate the vertex sharpness from the attached sharp edge information.
   /// Note that vertices with a corner tag always have zero sharpness.
@@ -832,18 +837,31 @@ public:
   /// For smooth, crease, and dart, this is used to determine the number of attached crease edges.
   /// COrner vertices always have sharpness = 0.
   /// </param>
+  /// <param name="global_vertex_sharpness">
+  /// The cases where maximum_edge_end_sharpness arise only when the vertex_tag is crease,
+  /// a subset of a SubD is being used to calculate maximum_edge_end_sharpness,
+  /// the crease vertex has two sectors and the maximum_edge_end_sharpness is different
+  /// for the two sectors, and only one sector of a 2 sector crease vertex is in the subset.
+  /// This is a very specialized situation thot occurs only in low level SubD evaluation
+  /// code. In all other cases, this value doesn't matter as long
+  /// as it is 0 &lt;= global_vertex_sharpness &lt;= maximum_edge_end_sharpness.
+  /// When in doubt pass 0.0.
+  /// </param>
   /// <param name="sharp_edge_end_count">
   /// Number of sharp edges attached to the vertex that have 
-  /// nonzero end sharpness at the vertex.</param>
+  /// nonzero end sharpness at the vertex.
+  /// </param>
   /// <param name="maximum_edge_end_sharpness">
   /// The largest sharp edge end sharpness at the vertex.
   /// </param>
   /// <returns></returns>
   static double VertexSharpness(
     ON_SubDVertexTag vertex_tag,
+    double global_vertex_sharpness,
     unsigned sharp_edge_end_count,
     double maximum_edge_end_sharpness
   );
+
 
   /// <summary>
   /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
@@ -2080,7 +2098,25 @@ public:
   // or x = ON_SubDComponentPtr::Create(...).
   ON__UINT_PTR m_ptr;
 
-  static const ON_SubDComponentPtr Null; //  // nullptr, type = unset, mark = 0
+  /// <summary>
+  /// nullptr, type = Unset, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr Null; 
+
+  /// <summary>
+  /// nullptr, type = Vertex, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullVertex;
+
+  /// <summary>
+  /// nullptr, type = Edge, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullEdge;
+
+  /// <summary>
+  /// nullptr, type = Face, direction = 0
+  /// </summary>
+  static const ON_SubDComponentPtr NullFace;
 
   /// <summary>
   /// ON_SubDComponentPtr::Type identifies the type of subdivision component referenced by
@@ -2121,6 +2157,15 @@ public:
     Dictionary compares type and ComponentBase() pointer as an unsigned.
   */
   static int CompareComponent(
+    const ON_SubDComponentPtr* a,
+    const ON_SubDComponentPtr* b
+  );
+
+  /*
+  Description:
+    Dictionary compares type and ComponentBase() id.
+  */
+  static int CompareComponentId(
     const ON_SubDComponentPtr* a,
     const ON_SubDComponentPtr* b
   );
@@ -5632,6 +5677,25 @@ public:
     ON_SubD* destination_subd
     );
 
+
+  /*
+  Description:
+    Uses the input surface to define a SubD.
+  Parameters:
+    boundary_control_points - [in]
+      Boundary control points.
+    destination_subd - [in]
+      Can be nullptr
+  Returns:
+    SubD with specified boundary or nullptr if input is not valid.
+  */
+  static ON_SubD* CreateFromBoundaryControlPoints(
+    const class ON_SimpleArray<ON_3dPoint>& boundary_control_points,
+    ON_SubD* destination_subd
+  );
+
+
+
   static ON_SubD* ToSubD( 
     const class ON_Geometry* geometry,
     const class ON_SubDFromMeshParameters* from_mesh_parameters,
@@ -6185,59 +6249,98 @@ public:
   );
 
 #if defined(OPENNURBS_PLUS)
-  /*
-  Description:
-    Creates a SubD sphere made from quad faces.
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      The resulting sphere will have 6*4^subdivision_level quads.
-      0 - 6 quads
-      1 - 24 quad
-      2 - 96 quads
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
+  /// <summary>
+  /// Creates a SubD sphere made from quad faces.
+  /// </summary>
+  /// <param name="sphere">Location, size and orientation of the sphere.</param>
+  /// <param name="vertex_location">
+  /// If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
+  /// points will be on the surface of the sphere.Otherwise the limit surface
+  /// points will be on the sphere.
+  /// </param>
+  /// <param name="quad_subdivision_level">
+  /// The resulting sphere will have 6*4^subdivision_level quads.
+  /// (0 for 6 quads, 1 for 24 quads, 2 for 96 quads, ...).
+  /// </param>
+  /// <param name="destination_subd">
+  /// If destination_subd is not null, the SubD sphere is saved in this instance.
+  /// </param>
+  /// <returns>
+  /// If the input parameters are valid, a pointer to the SubD quad sphere 
+  /// is returned. Otherwise nullptr is returned.
+  /// </returns>
   static ON_SubD* CreateSubDQuadSphere(
     const ON_Sphere sphere,
     ON_SubDComponentLocation vertex_location,
     unsigned quad_subdivision_level,
     ON_SubD* destination_subd
   );
-#endif
 
-#if 0
-  /*
-  Description:
-    Creates a SubD sphere made from triangular faces and 6 valent vertices.
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      The resulting sphere will have 80*4^tri_subdivision_level triangles.
-      0 - 180 triangles
-      1 - 320 triangles
-      2 - 1280 triangles
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
+  /// <summary>
+  /// Creates a SubD sphere made from polar triangle fans and bands of quads.
+  /// The result resembles a globe with triangle fans at the poles and the
+  /// edges forming latitude parallels and longitude meridians.
+  /// </summary>
+  /// <param name="sphere"></param>
+  /// <param name="vertex_location">
+  /// If vertex_location = ON_SubDComponentLocation::ControlNet, 
+  /// then the control net points will be on the surface of the sphere.
+  /// Otherwise the limit surface points will be on the sphere.
+  /// </param>
+  /// <param name="axial_face_count">
+  /// Number of faces along the sphere's meridians. 
+  /// (axial_face_count &gt;= 2)
+  /// For example, if you wanted each face to span 30 degrees of latitude, 
+  /// you would pass 6 (=180 degrees/30 degrees) for axial_face_count.
+  /// </param>
+  /// <param name="equatorial_face_count">
+  /// Number of faces around the sphere's parallels. 
+  /// (equatorial_face_count &gt;= 3)
+  /// For example, if you wanted each face to span 30 degrees of longitude, 
+  /// you would pass 12 (=360 degrees/30 degrees) for equatorial_face_count.
+  /// </param>
+  /// <param name="destination_subd">
+  /// If this pointer is not nullptr, the SubD globe is saved in this instance.
+  /// Otherwise a new SubD is created.
+  /// </param>
+  /// <returns>
+  /// If the input is valid, pointer to the SubD globe sphere is returned.
+  /// Otherwise nullptr is returned.
+  /// </returns>
+  static ON_SubD* CreateSubDGlobeSphere(
+    const ON_Sphere sphere,
+    ON_SubDComponentLocation vertex_location,
+    unsigned axial_face_count,
+    unsigned equatorial_face_count,
+    ON_SubD* destination_subd
+  );
+
+  /// <summary>
+  /// Creates a SubD sphere made from triangular faces.
+  /// This is a goofy topology for a Catmull Clark subdivision surface
+  /// (all triangles and all vertices have 5 or 6 edges).
+  /// You may want to consider using the much behaved result from
+  /// ON_SubD::CreateSubDQuadSphere() or even the result 
+  /// from ON_SubD::CreateSubDGlobeSphere().
+  /// </summary>
+  /// <param name="sphere">Location, size and orientation of the sphere.</param>
+  /// <param name="vertex_location">
+  /// If vertex_location = ON_SubDComponentLocation::ControlNet, 
+  /// then the control net points will be on the surface of the sphere.
+  /// Otherwise the limit surface points will be on the sphere.
+  /// </param>
+  /// <param name="tri_subdivision_level">
+  /// The resulting sphere will have 20*4^subdivision_level triangles.
+  /// (0 for 20 triangles, 1 for 80 triangles, 2 for 320 triangles, ...).
+  /// </param>
+  /// <param name="destination_subd">
+  /// If this pointer is not nullptr, the SubD tri sphere is saved in this instance.
+  /// Otherwise a new SubD is created.
+  /// </param>
+  /// <returns>
+  /// If the input is valid, pointer to the SubD tri sphere is returned.
+  /// Otherwise nullptr is returned.
+  /// </returns>
   static ON_SubD* CreateSubDTriSphere(
     const ON_Sphere sphere,
     ON_SubDComponentLocation vertex_location,
@@ -6245,94 +6348,35 @@ public:
     ON_SubD* destination_subd
   );
 
-  /*
-  Description:
-    Creates a SubD sphere based on an icosohedran (20 triangular faces and 5 valent vertices).
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      0 - 80 triangles (icosohedral control net)
-      1 - 60 quad
-      2 - 240 quads
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  static ON_SubD* CreateSubDIcosahedran(
+  /// <summary>
+  /// Creates a SubD sphere based on an icosohedron (20 triangular faces and 5 valent vertices).
+  /// This is a goofy topology for a Catmull Clark subdivision surface
+  /// (all triangles, all vertices have 5 edges).
+  /// You may want to consider using the much behaved result from
+  /// ON_SubD::CreateSubDQuadSphere(sphere, vertex_location, 1, destination_subd)
+  /// or even the result from ON_SubD::CreateSubDGlobeSphere().
+  /// </summary>
+  /// <param name="sphere">
+  /// Location, size and orientation of the sphere that circumscribes the icosahedron.
+  /// </param>
+  /// <param name="vertex_location">
+  /// If vertex_location = ON_SubDComponentLocation::ControlNet, 
+  /// then the control net points will be on the surface of the sphere.
+  /// Otherwise the limit surface points will be on the sphere.
+  /// </param>
+  /// <param name="destination_subd">
+  /// If this pointer is not nullptr, the SubD icosahedron is saved in this instance.
+  /// Otherwise a new SubD is created.
+  /// </param>
+  /// <returns>
+  /// If the input is valid, pointer to the SubD icosahedron is returned.
+  /// Otherwise nullptr is returned.
+  /// </returns>
+  static ON_SubD* CreateSubDIcosahedron(
     const ON_Sphere sphere,
     ON_SubDComponentLocation vertex_location,
-    unsigned subdivision_level,
     ON_SubD* destination_subd
   );
-
-  /*
-  Description:
-    Creates a SubD sphere based on an dodecahedron (20 triangular faces and 5 valent vertices).
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      0 - 5 pentagons (dodecahedral control net)
-      1 - 60 quad
-      2 - 240 quads
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  static ON_SubD* CreateSubDDodecahedran(
-    const ON_Sphere sphere,
-    ON_SubDComponentLocation vertex_location,
-    unsigned subdivision_level,
-    ON_SubD* destination_subd
-  );
-
-
-  /*
-  Description:
-    Creates a SubD sphere made with triangles and quads to 
-    resemble a globe with latitude and longitude circles.
-  Parameters:
-    sphere - [in]
-      Location, size and orientation of the sphere
-    vertex_location - [in]
-      If vertex_location = ON_SubDComponentLocation::ControlNet, then the control net
-      points will be on the surface of the sphere. Otherwise the limit surface
-      points will be on the sphere.
-    subdivision_level - [in]
-      The resulting sphere will have 80*4^tri_subdivision_level triangles.
-      0 - 180 triangles
-      1 - 320 triangles
-      2 - 1280 triangles
-      ...
-    destination_subd [out] -
-      If destination_subd is not null, the SubD sphere is saved in this instance.
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  static ON_SubD* CreateSubDGlobe(
-    const ON_Sphere sphere,
-    ON_SubDComponentLocation vertex_location,
-    unsigned latitude_count,
-    unsigned longitued_count,
-    ON_SubD* destination_subd
-  );
-
 #endif
 
   /*
@@ -8455,7 +8499,7 @@ public:
   /// <param name="vertex_surface_point"></param>
   /// <returns></returns>
   bool SetVertexSurfacePoint(
-    int vertex_id,
+    unsigned int vertex_id,
     ON_3dPoint vertex_surface_point
   );
 #endif
@@ -11834,6 +11878,69 @@ public:
   */
   void ClearFragmentTextureCoordinatesTextureSettingsHash() const;
 
+  /// <summary>
+  /// Determing if this SubD's mesh fragments have per vertex texture coordinates.
+  /// </summary>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex texture coordinates, then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentTextureCoordinates() const;
+
+  /// <param name="texture_mapping_tag">
+  /// This tag identifies the method and computation used to set the
+  /// per vertex texture coordinates on the fragments. The tag is persistent so
+  /// that the texture coordinates can be recomputed from the id in situations where
+  /// fragments need to be recalculated.
+  /// </param>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex texture coordinates and 
+  /// texture_mapping_tag = TextureMappingTag(), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentTextureCoordinates(
+    ON_MappingTag texture_mapping_tag
+  ) const;
+
+  /// <param name="texture_settings_hash">
+  /// This hash uniquely identifies the method and computation used to
+  /// set the per vertex texture coordinates on the fragments. The hash is a runtime
+  /// value that has meaning only when fragments with per vertex texture coordinates
+  /// exist.
+  /// </param>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex texture coordinates and 
+  /// texture_settings_hash = TextureSettingsHash(), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentTextureCoordinates(
+    ON_SHA1_Hash texture_settings_hash
+  ) const;
+
+  /// <param name="texture_settings_hash">
+  /// This hash uniquely identifies the method and computation used to
+  /// set the per vertex texture coordinates on the fragments. The hash is a runtime
+  /// value that has meaning only when fragments with per vertex texture coordinates
+  /// exist.
+  /// </param>
+  /// <param name="texture_mapping_tag">
+  /// This tag identifies the method and computation used to set the
+  /// per vertex texture coordinates on the fragments. The tag is persistent so
+  /// that the texture coordinates can be recomputed from the id in situations where
+  /// fragments need to be recalculated.
+  /// </param>
+  /// <returns>
+  /// If this SubD has mesh fragments with per vertex texture coordinates and 
+  /// texture_settings_hash = TextureSettingsHash() and
+  /// texture_mapping_tag = TextureMappingTag(), then true is returned.
+  /// Otherwise false is returned.
+  /// </returns>
+  bool HasFragmentTextureCoordinates(
+    ON_SHA1_Hash texture_settings_hash,
+    ON_MappingTag texture_mapping_tag
+  ) const;
+
+
 private:
   /*
   Description:
@@ -11916,30 +12023,45 @@ public:
   /// 
   /// See ON_SurfaceCurvature::KappaValue()
   /// </summary>
-  /// <param name="bLazySet"></param>
-  /// If bLazySet and a fragment has a matching tag, hash, and set vertex colors, then
-  /// the existing colors are assumed to be correctly set. When in doubt, pass true.
+  /// <param name="bUpdateSurfaceMeshCache">
+  /// If bUpdateSurfaceMeshCache is true, this->UpdateSurfaceMeshCache(true) is called
+  /// before the curvatures and colors are set. If you have moved control net points
+  /// or changed tags and not updated the surface mesh cache, then pass true.
+  /// </param>  
+  /// <param name="bLazyColorSet">
+  /// If bLazyColorSet and a fragment has a matching tag, hash, and set vertex colors,
+  /// the the existing colors are assumed to be correctly set.
+  /// When in doubt, pass true.
+  /// </param>
   /// <param name="kappa_colors"></param>
   /// <param name="kappa_range">
   /// kappa_colors.Color(K) is used to assigned a color to surface principal curvatures K.
   /// </param>
   /// <returns></returns>
   bool SetCurvatureColorAnalysisColors(
-    bool bLazySet,
+    bool bUpdateSurfaceMeshCache,
+    bool bLazyColorSet,
     ON_SurfaceCurvatureColorMapping kappa_colors
   ) const;
 
   /// <summary>
   /// Set the SubD's mesh fragment colors from the draft angle of the surface normals.
   /// </summary>
-  /// <param name="bLazySet">
-  /// If bLazySet and a fragment has a matching tag, hash, and set vertex colors, then
-  /// the existing colors are assumed to be correctly set. When in doubt, pass true.
+  /// <param name="bUpdateSurfaceMeshCache">
+  /// If bUpdateSurfaceMeshCache is true, this->UpdateSurfaceMeshCache(true) is called
+  /// before the curvatures and colors are set. If you have moved control net points
+  /// or changed tags and not updated the surface mesh cache, then pass true.
+  /// </param>  
+  /// <param name="bLazyColorSet">
+  /// If bLazyColorSet and a fragment has a matching tag, hash, and set vertex colors, 
+  /// then the existing colors are assumed to be correctly set.
+  /// When in doubt, pass true.
   /// </param>
   /// <param name="draft_angle_colors"></param>
   /// <returns></returns>
   bool SetDraftAngleColorAnalysisColors(
-    bool bLazySet,
+    bool bUpdateSurfaceMeshCache,
+    bool bLazyColorSet,
     ON_SurfaceDraftAngleColorMapping draft_angle_colors
   ) const;
 #endif
@@ -11953,17 +12075,27 @@ public:
   /// </returns>
   bool HasFragmentColors() const;
 
-  /// <param name="color_tag"></param>
+  /// <param name="color_mapping_tag">
+  /// This tag identifies the method and computation used to set the
+  /// per vertex colors on the fragments. The tag is persistent so
+  /// that the colors can be recomputed from the id in situations where
+  /// fragments need to be recalculated.
+  /// </param>
   /// <returns>
   /// If this SubD has mesh fragments with per vertex colors and 
   /// color_tag = FragmentColorsMappingTag(), then true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool HasFragmentColors(
-    ON_MappingTag color_tag
+    ON_MappingTag color_mapping_tag
   ) const;
 
-  /// <param name="color_settings_hash"></param>
+  /// <param name="color_settings_hash">
+  /// This hash uniquely identifies the method and computation used to
+  /// set the per vertex colors on the fragments. The has is a runtime
+  /// value that has meaning only when fragments with per vertex colors
+  /// exist.
+  /// </param>
   /// <returns>
   /// If this SubD has mesh fragments with per vertex colors and 
   /// color_settings_hash = FragmentColorsSettingsHash(), then true is returned.
@@ -11973,17 +12105,27 @@ public:
     ON_SHA1_Hash color_settings_hash
   ) const;
 
-  /// <param name="color_settings_hash"></param>
-  /// <param name="color_tag"></param>
+  /// <param name="color_settings_hash">
+  /// This hash uniquely identifies the method and computation used to
+  /// set the per vertex colors on the fragments. The has is a runtime
+  /// value that has meaning only when fragments with per vertex colors
+  /// exist.
+  /// </param>
+  /// <param name="color_mapping_tag">
+  /// This tag identifies the method and computation used to set the
+  /// per vertex colors on the fragments. The tag is persistent so
+  /// that the colors can be recomputed from the id in situations where
+  /// fragments need to be recalculated.
+  /// </param>
   /// <returns>
   /// If this SubD has mesh fragments with per vertex colors and 
   /// color_settings_hash = FragmentColorsSettingsHash() and
-  /// color_tag = FragmentColorsMappingTag(), then true is returned.
+  /// color_mapping_tag = ColorsMappingTag(), then true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool HasFragmentColors(
     ON_SHA1_Hash color_settings_hash,
-    ON_MappingTag color_tag
+    ON_MappingTag color_mapping_tag
   ) const;
 
 
@@ -11999,32 +12141,38 @@ public:
     bool bClearFragmentColorsMappingTag
   );
 
+
+  /*
+  Returns:
+    This mapping tag ideitifies the color mapping used to set fragment per vertex colors.
+  */
+  const ON_MappingTag ColorsMappingTag() const;
+
+  /*
+  Description:
+    Set the colors mapping tag.
+  Remarks:
+    Calling this->SetColorsMappingTag() does not change existing cached
+    fragment vertex colors. At an appropriate time, call this->SetFragmentColorsFromCallback()
+    to update fragment vertex colors on any cached fragments.
+
+    The color mapping tag and per vertex colors are mutable properties.
+    They can be changed by rendering applications as needed.
+  */
+  void SetColorsMappingTag(const class ON_MappingTag&) const;
+
+
   /*
     Returns:
       hash identifying the way the fragment vertex colors were set.
   */
   const ON_SHA1_Hash FragmentColorsSettingsHash() const;
 
-  /*
-  Returns:
-    The current fragment vertex colors mapping tag.
-  */
+  ON_DEPRECATED_MSG("Use ON_SubD::ColorsMappingTag()")
   const ON_MappingTag FragmentColorsMappingTag() const;
 
-  /*
-  Description:
-    Set the fragment colors mapping tag.
-  Remarks:
-    Calling this->SetFragmentColorsMappingTag() does not change existing cached
-    fragment vertex colors. At an appropriate time, call this->SetFragmentColorsFromCallback()
-    to update fragment vertex colors on any cached fragments.
-
-    SubD fragment vertex tag and colors are a mutable property.
-    They can be changed by rendering applications as needed.
-  */
+  ON_DEPRECATED_MSG("Use ON_SubD::SetColorsMappingTag()")
   void SetFragmentColorsMappingTag(const class ON_MappingTag&) const;
-
-
 
 public:
   /*
@@ -12129,12 +12277,44 @@ public:
     /// </summary>
     static const ON_UUID FastAndSimpleFacePackingId;
 
+    /// <summary>
+    /// The quad sphere face packing is used by ON_SubD::CreateSubDQuadSphere.
+    /// It divides the quad sphere into two similar sets (like a baseball cover) and assigns
+    /// the bottom third of texture space to the first region and the top third to 
+    /// the second region. The middle third is unmapped so that texture distortion is 
+    /// uniform for each quad.
+    /// {9C491E5C-2B46-48AA-BD43-7B18FDC52D58}
+    /// </summary>
+    static const ON_UUID QuadSphereFacePackingId;
+
+    /// <summary>
+    /// The globe sphere face packing is used by ON_SubD::CreateSubDGlobeSphere.
+    /// The equatorial band of quads is assigned a central horizontal strip of 
+    /// texture space while the polar triangle fans are assigned horizontal strips
+    /// from the bottom and top of texture space. 
+    /// The heights of the horizontal strips of texture space are chosen to minimize
+    /// distortion as latitude varies.
+    /// {63CA2FC1-8F6C-4EFC-9A07-C6A26A8C93FB}
+    /// </summary>
+    static const ON_UUID GlobeSphereFacePackingId;
+
+
+    /// <summary>
+    /// The custom face packing is typically used when a subd creation 
+    /// function sets a custom face packing different from the default.
+    /// Typically this happens when there are quad packs that align
+    /// well with the overall geometry or to reduce texture distortion.
+    /// It is used to indicate the built-in automatic face packing
+    /// was not applied.
+    /// {91FD7018-8BBE-4492-8D2E-E8761C505ACF}
+    /// </summary>
+    static const ON_UUID CustomFacePackingId;
 
     // ADD NEW PackFaces ids above this comment and below FastAndSimplePackFacesId.
 
 
     /// <summary>
-    /// ON_SubD::DefaultFacePackingId ideitifies the default face packing.
+    /// ON_SubD::DefaultFacePackingId identifies the default face packing.
     /// Code that wants to use the built-in face packing that is currently
     /// the best option for general use, will specify ON_SubD::DefaultFacePackingId.
     /// 
@@ -12387,7 +12567,7 @@ public:
       subd must point to an ON_SubD that was constructed on the heap using
       an operator new call with a public ON_SubD constructor.
   Returns:
-    a pointer to the managed subd or nullptr subd in not valid.
+    a pointer to the managed subd or nullptr subd if not valid.
   Example:
     ON_SubD* subd = new ON_SubD(...);
     ON_SubDRef subr;
@@ -14559,9 +14739,46 @@ public:
   */
   ON_ComponentStatus Status() const;
 
+  /// <summary>
+  /// This simple version
+  /// transforms the points and normals and unconditionally
+  /// makes no changes to the curvatures, texture coordinates and colors.
+  /// 
+  /// Typically lots of fragments are being transformed and
+  /// the type and context of the transformation determines
+  /// if texture coordinate, curvature and color inforation should be 
+  /// preserved or destroyed. It is better to determine the answers to these
+  /// questions and call the version of Transform with
+  /// the bKeepTextures, bKeepCurvatures and bKeepColors parameters. 
+  /// For example if the transformation is an isometry and the colors
+  /// are set from the curvatures, then curvatures and colors should be
+  /// kept. If the transformation is not an isometry, the curvatures should
+  /// be destroyed.
+  /// If the texture coordinates are set from grid location 
+  /// (fake surface paramaters), the the texture coordinates should be kept.
+  /// If transform is not an identity and the texture coordinates come from a 
+  /// world object mapping, the should generally be destroyed.
+  /// </summary>
+  /// <param name="xform"></param>
+  /// <returns></returns>
   bool Transform(
     const ON_Xform& xform
-    );  
+  );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="bKeepTextures"></param>
+  /// <param name="bKeepCurvatures"></param>
+  /// <param name="bKeepColors"></param>
+  /// <param name="xform"></param>
+  /// <returns></returns>
+  bool Transform(
+    bool bKeepTextures,
+    bool bKeepCurvatures,
+    bool bKeepColors,
+    const ON_Xform& xform
+  );
 
   ON_SubDMeshFragment* m_next_fragment;
   ON_SubDMeshFragment* m_prev_fragment;
@@ -16493,7 +16710,7 @@ protected:
   mutable double m_saved_subd_point1[3]; // saved subdivision point
 
 private:
-  // Reserved for future use for attributes that apply to allSubD components (ON_SubDVertex, ON_SubDEdge, and ON_SubDFace).
+  // Reserved for future use for attributes that apply to all SubD components (ON_SubDVertex, ON_SubDEdge, and ON_SubDFace).
   ON__UINT64 m_reserved8bytes1;
   ON__UINT64 m_reserved8bytes2;
   ON__UINT64 m_reserved8bytes3;
@@ -16752,9 +16969,8 @@ public:
     bTransformationSavedSubdivisionPoint - [in]
       If the transformation is being applied to every vertex, edge and 
       face in every level of a subdivision object, and the transformation
-      is an isometry (rotation, translation, ...), a uniform scale, or a 
-      composition of these types, then set 
-      bTransformationSavedSubdivisionPoint = true to apply the
+      is an orientation preserving isometry (rotation, translation, ...),
+      then set bTransformationSavedSubdivisionPoint = true to apply the
       transformation to saved subdivision and saved limit point information.
       In all other cases, set bTransformationSavedSubdivisionPoint = false
       and any saved subdivision points or saved limit points will be
@@ -16780,6 +16996,36 @@ public:
 
 
   ON_BoundingBox ControlNetBoundingBox() const;
+
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when a vertex's 
+  /// connections to attached edges or faces have been changed.
+  /// See also ON_SubDVertex::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net point) 
+  /// that help determine the vertex's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the vertex's id and the ids of the edges and faces attached to this vertex.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when a vertex's 
+  /// connections to attached edges or faces have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net point) 
+  /// that help determine the vertex's subdivision point in the CRC.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
 
 #if defined(OPENNURBS_PLUS)
   ON_BoundingBox SurfaceBoundingBox(
@@ -16807,8 +17053,55 @@ private:
   unsigned char  m_reserved1 = 0;
 private:
   unsigned short  m_reserved2 = 0;
+
 private:
-  unsigned int m_reserved3 = 0;
+  // The vertex sharpness is the maximum edge end sharpenss of the
+  // ends attached to the vertex. When a SubD is complete, 
+  // all edges are present and the value can be calculated as needed.
+  // 
+  // In low level subdivision point evaluation code, a subset of the SubD containing 
+  // only the components from the sector being evaluated is used. There is one situation 
+  // where m_crease_sector_vertex_sharpness needs to be set to properly
+  // evaluate the subdivision points and limit points.
+  // 1) The vertex is an interior crease 
+  // (vertex has a crease tag and 2 sectors - implies both crease will have 2 faces).
+  // 2) The sharp edges in the two sectors generate different vertex sharpnesses.
+  // Again, this only occurs in low level evauation code.
+  // This value should be zero or be the same as the maximum sharpness 
+  // of all smooth edge ends at this vertex in the complete SubD.
+  // The value is mutable because it is updated in the case above
+  // at appropriate times in the evaluation calculation.
+  // If per vertex sharpness is ever added, that value must be stored someplace else
+  // as, depending on the initial sharpness configuration, this value can be
+  // larger, smaller, or equal to a per vertex sharpness.
+  mutable float m_crease_sector_vertex_sharpness = 0.0;
+
+private:
+
+#if defined(ON_COMPILING_OPENNURBS)
+public:
+  /// <summary>
+  /// This function is for use in ON_SubDVertexQuadSector 
+  /// when a subset of a SubD is being used
+  /// to calculate a global subdivision point. 
+  /// Always use the tools that set edge sharpnesses to
+  /// edit SubD sharpness. Never use this function as
+  /// a way to modify SubD sharpness properties.
+  /// </summary>
+  /// <param name="crease_sector_vertex_sharpness">
+  /// Maximum edge end sharpness at this vertex in the complete SubD.
+  /// </param>
+  void Internal_UpdateCreaseSectorVertexSharpnessForExperts(double crease_sector_vertex_sharpness) const;
+
+  /// <summary>
+  /// This function is for use by experts in low level subdivisino point 
+  /// evaluations when the center vertex is a crease with two sectors.
+  /// </summary>
+  /// <returns>
+  /// The crease sector vertex sharpness.
+  /// </returns>
+  double Internal_CreaseSectorVertexSharpnessForExperts() const;
+#endif
 
 public:
   unsigned short m_edge_count = 0;
@@ -17298,7 +17591,7 @@ public:
     two attached edges are attached to one face,
     the remaining edges are attached to two faces.
   Returns:
-    True if the vertex has interior vertex toplology.
+    True if the vertex has boundary vertex toplology.
   Remarks:
     Tags are ignored. This property is often used during construction
     and modification when tags are not set.
@@ -17706,11 +17999,10 @@ public:
 
   Parameters:
     bTransformationSavedSubdivisionPoint - [in]
-      If the transformation is being applied to every vertex, edge and 
+      If the transformation is being applied to every vertex, edge and
       face in every level of a subdivision object, and the transformation
-      is an isometry (rotation, translation, ...), a uniform scale, or a 
-      composition of these types, then set 
-      bTransformationSavedSubdivisionPoint = true to apply the
+      is an orientation preserving isometry (rotation, translation, ...),
+      then set bTransformationSavedSubdivisionPoint = true to apply the
       transformation to saved subdivision and saved limit point information.
       In all other cases, set bTransformationSavedSubdivisionPoint = false
       and any saved subdivision points or saved limit points will be
@@ -17724,6 +18016,36 @@ public:
     );
 
   const ON_BoundingBox ControlNetBoundingBox() const;
+
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when an edge's 
+  /// connections to attached vertices or faces have been changed.
+  /// See also ON_SubDEdge::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net points) 
+  /// that help determine the edge's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the edge's id and the ids of the vertices and faces attached to this edge.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when an edge's 
+  /// connections to attached vertices or faces have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (tags, sharpnesses, control net points) 
+  /// that help determine the edge's subdivision point in the CRC.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
 
   const ON_Plane CenterFrame(
     ON_SubDComponentLocation subd_appearance
@@ -18331,6 +18653,7 @@ public:
 
   /// <summary>
   /// Get the edge's sharpness at the end with the specified vertex.
+  /// If the edge is a crease, ON_SubDEdgeSharpness::Smooth is returned.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
   /// <param name="evi">End index (0=start or 1=end).</param>
@@ -18344,6 +18667,25 @@ public:
     unsigned evi
   ) const;
 
+  /// <summary>
+  /// Get the edge's sharpness at the end with the specified vertex.
+  /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
+  /// </summary>
+  /// <param name="evi">End index (0=start or 1=end).</param>
+  /// <param name="bUseCreaseSharpness">
+  /// If the edge is a crease and bUseCreaseSharpness is false, then ON_SubDEdgeSharpness::Smooth is returned.
+  /// If the edge is a crease and bUseCreaseSharpness is true, then ON_SubDEdgeSharpness::Crease is returned.
+  /// </param>
+  /// <returns>
+  /// If the edge is sharp, the sharpness at the end with the specified by evi is returned.
+  /// If the edge is smooth or a crease, 0 is returned.
+  /// Otherwise, 0.0 is returned.
+  /// </returns>
+  /// <returns>The sharpness at the end of the edge specified by evi.</returns>
+  double EndSharpness(
+    unsigned evi,
+    bool bUseCreaseSharpness
+  ) const;
 
   /// <summary>
   /// Get the edge sharpenss values for the subdivided edge at the specified end of this edge.
@@ -18730,9 +19072,8 @@ public:
     bTransformationSavedSubdivisionPoint - [in]
       If the transformation is being applied to every vertex, edge and
       face in every level of a subdivision object, and the transformation
-      is an isometry (rotation, translation, ...), a uniform scale, or a
-      composition of these types, then set
-      bTransformationSavedSubdivisionPoint = true to apply the
+      is an orientation preserving isometry (rotation, translation, ...),
+      then set bTransformationSavedSubdivisionPoint = true to apply the
       transformation to saved subdivision and saved limit point information.
       In all other cases, set bTransformationSavedSubdivisionPoint = false
       and any saved subdivision points or saved limit points will be
@@ -18746,6 +19087,36 @@ public:
   );
 
   const ON_BoundingBox ControlNetBoundingBox() const;
+
+  /// <summary>
+  /// Get a SHA-1 hash that is useful in detecting when a face's 
+  /// connections to attached vertices or edges have been changed.
+  /// See also ON_SubDFace::TopologyCRC32() which, in practice,
+  /// is just as reliable as the hash.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (control net points) 
+  /// that help determine the faces's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the face's id the ids of the vertices and edges attached to this face.
+  /// </returns>
+  const ON_SHA1_Hash TopologyHash(bool bIncludeSubdivisionProperties) const;
+
+  /// <summary>
+  /// Get a 32 bit CRC that is useful in detecting when a face's 
+  /// connections to attached vertices or edges have been changed.
+  /// </summary>
+  /// <param name="bIncludeSubdivisionProperties">
+  /// Pass true if you want to include nontopological subdivision properties
+  /// (control net points) 
+  /// that help determine the faces's subdivision point in the hash.
+  /// </param>
+  /// <returns>
+  /// A 32 bit CRC = this->TopologyHash(bIncludeSubdivisionProperties).CRC32(0).
+  /// </returns>
+  ON__UINT32 TopologyCRC32(bool bIncludeSubdivisionProperties) const;
 
   /*
   Parameters:
@@ -18792,7 +19163,7 @@ public:
   const class ON_SubDFace* m_next_face = nullptr;  // linked list of faces on this level
 
 private:
-  unsigned int m_reserved = 0;
+  unsigned int m_reserved1 = 0;
 
 private:
   // If non zero, m_pack_id identifies the packed group of faces this faces belongs to.
@@ -18809,8 +19180,8 @@ private:
   // If faces in a quad group are removed from a subd, the pack rects for the entire subd must be recalculated.
   double m_pack_rect_origin[2] = {ON_DBL_QNAN};
   double m_pack_rect_size[2] = {ON_DBL_QNAN};
-  unsigned int m_packed_rect_u = 0;
-  unsigned int m_packed_rect_v = 0;
+  unsigned int m_reserved2 = 0; // m_packed_rect_u = 0;
+  unsigned int m_reserved3 = 0; // m_packed_rect_v = 0;
 
   enum PackStatusBits : unsigned char
   {
@@ -19254,12 +19625,35 @@ public:
     double* N
   ) const;
 
+  /// <summary>
+  /// Get the point on the limit surface that is at the center of the face.
+  /// </summary>
+  /// <returns>
+  /// Limit surface point at the face's center. 
+  /// ON_3dPoint::NanPoint is returned if the face is not valid.
+  /// </returns>
   const ON_3dPoint SurfaceCenterPoint(
   ) const;
 
+  /// <summary>
+  /// Get the limit surface normal vector at the center of the face.
+  /// </summary>
+  /// <returns>
+  /// Limit surface normal vector at the face's center. 
+  /// ON_3dVector::NanPoint is returned if the face is not valid.
+  /// </returns>
   const ON_3dVector SurfaceCenterNormal(
   ) const;
 
+  /// <summary>
+  /// Get the limit surface tangent plane at the center of the face. 
+  /// The plane's origin is the point on the limit surface at the center of the face.
+  /// The plane's z axis is the limit surface normal vector at the center of the face.
+  /// </summary>
+  /// <returns>
+  /// Limit surface tanget plane at the face's center. 
+  /// ON_Plane::NanPlane is returned if the face is not valid.
+  /// </returns>
   const ON_Plane SurfaceCenterFrame() const;
 
   bool GetCenterPointAndNormal(
@@ -19282,18 +19676,71 @@ public:
 
 #endif
 
+  /// <summary>
+  /// The face's control net center point is the average of the face's
+  /// vertex control net points. This is the same point as the face's
+  /// subdivision point.
+  /// </summary>
+  /// <returns>
+  /// The average of the face's vertex control net points
+  /// </returns>  
   const ON_3dPoint ControlNetCenterPoint() const;
 
+  /// <summary>
+  /// When the face's control net polygon is planar, the face's
+  /// control net normal is a unit vector perpindicular to the plane
+  /// that points outwards. If the control net polygon is not
+  /// planar, the control net normal is control net normal is a unit
+  /// vector that is the average of the control polygon's corner normals.
+  /// </summary>
+  /// <returns>
+  /// A unit vector that is normal to planar control net polygons and a good
+  /// compromise for nonplanar control net polygons.
+  /// </returns> 
   const ON_3dVector ControlNetCenterNormal() const;
 
+  /// <summary>
+  /// The face's control net center frame is a plane 
+  /// with normal equal to this->ControlNetCenterNormal() 
+  /// and origin equal to this->ControlNetCenterPoint(). 
+  /// The x and y axes of the frame have no predictable relationship 
+  /// to the face or SubD control net topology.
+  /// </summary>
+  /// <returns>
+  /// A plane with unit normal equal to this->ControlNetCenterNormal() 
+  /// and origin equal to this->ControlNetCenterPoint().
+  /// If the face is not valid, ON_Plane::NanPlane is returned.
+  /// </returns> 
   const ON_Plane ControlNetCenterFrame() const;
 
+  /// <returns>
+  /// True if the control net polygon is convex with respect to the
+  /// plane this->ControlNetCenterFrame().
+  /// </returns>
   bool IsConvex() const;
 
+  /// <returns>
+  /// True if the control net polygon is not convex with respect to the
+  /// plane this->ControlNetCenterFrame().
+  /// </returns>
   bool IsNotConvex() const;
 
+  /// <summary>
+  /// Determine if the face's control net polygon is planar.
+  /// </summary>
+  /// <param name="planar_tolerance"></param>
+  /// <returns>
+  /// True if the face's control net polygon is planar.
+  /// </returns>
   bool IsPlanar(double planar_tolerance = ON_ZERO_TOLERANCE) const;
 
+  /// <summary>
+  /// Determine if the face's control net polygon is not planar.
+  /// </summary>
+  /// <param name="planar_tolerance"></param>
+  /// <returns>
+  /// True if the face's control net polygon is not planar.
+  /// </returns>
   bool IsNotPlanar(double planar_tolerance = ON_ZERO_TOLERANCE) const;
 
 public:
@@ -19325,7 +19772,7 @@ public:
     then the texture point is set and true is returned.
     Otherwise, false is returned.
   Remarks:
-    To allocate texture point storage, call ON_SubD.AddFaceTexturePointStorage(this).
+    To allocate texture point storage, call ON_SubD.AllocateFaceTexturePoints(this).
     Texture points are a mutable property on ON_SubDFace.
   */
   bool SetTexturePoint(
@@ -21493,15 +21940,15 @@ public:
   static const ON_SubDFromMeshParameters InteriorCreases;
 
   // Create an interior sub-D crease along all input mesh double edges.
-  // Look for convex corners at sub-D vertices with 2 edges
-  // that have an included angle <= 90 degrees.
+  // Look for convex corners at sub-D vertices with 2 edges or fewer
+  // that have an included angle <= 120 degrees.
   static const ON_SubDFromMeshParameters ConvexCornersAndInteriorCreases;
 
   // Create an interior sub-D crease along all input mesh double edges.
-  // Look for convex corners at sub-D vertices with 2 edges
-  // that have an included angle <= 90 degrees.
-  // Look for concave corners at sub-D vertices with 3 edges
-  // that have an included angle >= 270 degrees.
+  // Look for convex corners at sub-D vertices with 2 edges or fewer
+  // that have an included angle <= 120 degrees.
+  // Look for concave corners at sub-D vertices with 3 edges or more
+  // that have an included angle >= 240 degrees.
   static const ON_SubDFromMeshParameters ConvexAndConcaveCornersAndInteriorCreases;
 
   ///////////////////////////////////////////////////////////////////////////////////////

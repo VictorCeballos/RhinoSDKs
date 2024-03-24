@@ -207,7 +207,7 @@ public:
 	/** Get data specified by a unique id.
 		\param uuidData is the identifier of the data. UUIDs defined by Rhino are specified above.
 		\param bForWrite specifies if you intend to write to the data. \see Commit() \see Discard.
-		\param bAutoChangeBracket is \e if you want BeginChange() and EndChange() to be called
+		\param bAutoChangeBracket is \e true if you want BeginChange() and EndChange() to be called
 		 automatically when the data is contents.
 		\return a pointer which can be cast to the type for the identifier as documented above.
 		 Note that this method will return null if the requested data type cannot be provided. */
@@ -282,44 +282,4 @@ public:
 
 protected:
 	virtual ~IRhRdkUndoRecord() { }
-};
-
-/** \class IRhRdkToneMapping [SDK_UNFREEZE]
-
-	This interface is deprecated and only kept for backward compatibility.
-
-*/
-RDK_DEPRECATED_CLASS class RHRDK_SDK IRhRdkToneMapping
-{
-public:
-	/*RDK_DEPRECATED*/ enum class Methods : unsigned int
-	{
-		None,
-		BlackWhitePoint,
-		Logarithmic,
-	};
-
-	/** Get whether or not tone mapping will be applied during rendering. */
-	virtual bool ApplyWhileRendering(void) const = 0;
-
-	/** Set whether or not tone mapping will be applied during rendering. */
-	virtual void SetApplyWhileRendering(bool b) = 0;
-
-	/** Get tone mapping method. */
-	virtual IRhRdkToneMapping::Methods Method(void) const = 0;
-
-	/** Set tone mapping method. */
-	virtual void SetMethod(IRhRdkToneMapping::Methods) = 0;
-
-	/** Get tone mapping params. */
-	virtual void GetParams(OUT IRhRdk_XMLSection& section) const = 0;
-
-	/** Set tone mapping params. */
-	virtual void SetParams(const IRhRdk_XMLSection& section) = 0;
-
-	/** Emergency virtual function for future expansion. */
-	virtual void* EVF(const wchar_t* wszFunc, void* pvData) = 0;
-
-protected:
-	virtual ~IRhRdkToneMapping() { }
 };

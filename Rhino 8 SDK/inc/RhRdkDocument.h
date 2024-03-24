@@ -236,9 +236,9 @@ public: // Content.
 	enum
 	{
 		ccc_AllowNone       = 0x0001, // Allow (none) item to be displayed in dialog.
-		ccc_AutoEdit        = 0x0002, // Automatically open the new content in the relevant modeless thumbnail editor.
+		ccc_AutoEdit        = 0x0002, // OBSOLETE. The new content is opened in the relevant modeless thumbnail editor unless the user started from an existing content.
 		ccc_Preserve        = 0x0004, // Specifies that the user should be given the opportunity to preserve the old child as a child of the new child.
-		ccc_AutoEditBM      = 0x0008, // ccc_AutoEdit will not edit bitmap textures unless this flag is also set.
+		ccc_AutoEditBM      = 0x0008, // OBSOLETE. Bitmap textures are no longer given special treatment.
 		ccc_NoGroupChange   = 0x0010, // If this flag is set, grouped contents will not be changed.
 		ccc_HideNewTab      = 0x0020, // If this flag is set, then the new tab will be hidden.
 		ccc_HideExistingTab = 0x0040, // If this flag is set, then the existing tab will be hidden.
@@ -263,7 +263,7 @@ public: // Content.
 		 If you want to modify the content you will need to call BeginChange() to get a non-const reference.
 		\see BeginChange() */
 	virtual const CRhRdkContent* ChangeChildContent(CRhRdkContent& parent, const wchar_t* wszChildSlotName,
-                                                    const CRhRdkContentKindList& allowedKinds, UINT ccc_Flags=ccc_AllowNone|ccc_AutoEdit);
+                                 const CRhRdkContentKindList& allowedKinds, UINT ccc_Flags=ccc_AllowNone|ccc_AutoEdit);
 
 	/** Result of ShowContentTypeBrowser() */
 	enum class SctbResult : unsigned int
@@ -328,11 +328,9 @@ public: // Content.
 
 public: // Embedded support files.
 
-	/** \return \e true if embedding of support files is enabled when saving, else \e false. */
-	virtual bool EmbedSupportFilesOn(void) const;
-
-	/** Set whether or not embedding of support files is enabled when saving. */
-	virtual void SetEmbedSupportFilesOn(bool b);
+	// These two functions are deprecated because this information is not supposed to be stored per-document.
+	RDK_DEPRECATED virtual bool EmbedSupportFilesOn(void) const;
+	RDK_DEPRECATED virtual void SetEmbedSupportFilesOn(bool b);
 
 	virtual TextureReportResult TextureReport(TextureReportFilter initialFilter, bool bAllowAbort, bool bForceDisplayIfEmpty) const;
 

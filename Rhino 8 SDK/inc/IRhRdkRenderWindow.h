@@ -7,7 +7,7 @@
 #import <Metal/Metal.h>
 #endif
 
-class CRhRdkImageAdjust;
+class CRhRdkImageAdjust; // OBSOLETE -- not implemented.
 class CRhRdkRenderPlugIn;
 class CRhRdkRenderingInfo;
 class IRhRdkRenderUI;
@@ -195,7 +195,18 @@ public:
 	/** Unlock the dib. Must be called after \e any call to LockDib(). */
 	virtual void UnlockDib(void) const = 0;
 
-	/** \return the image adjustment parameters. */
+	/** OBSOLETE -- not implemented
+
+		CRhRdkImageAdjust is no longer used and is not implemented. To access the settings that this
+		used to provide, you will need access to the document being rendered.
+
+		- For dithering settings, please use doc.Properties().RenderSettings().Dithering().
+
+		- For gamma settings, please use doc.Properties().RenderSettings().LinearWorkflow().
+
+		- For tone mapping settings, please use doc.Properties().RenderSettings().PostEffects().
+
+	*/
 	/*RDK_DEPRECATED*/ virtual CRhRdkImageAdjust Adjust(void) const = 0;
 
 	/** \return The render session id of the associated render session. */
@@ -531,15 +542,15 @@ public: // Events.
 
 		enum class Hints : unsigned int
 		{
-			Adjustment,  // OBSOLETE
-			Channel,
-			Progress,    // OBSOLETE
-			SessionState,
-			Other,       // NOT USED
-			Dib,         // OBSOLETE
+			Adjustment,         // #### OBSOLETE
+			Channel,            // Any channel change requiring a refresh in the UI.
+			Progress,           // #### OBSOLETE
+			SessionState,       // Render session state changed.
+			Other,              // #### OBSOLETE
+			Dib,                // #### OBSOLETE
 			PostEffectProgress, // IMPORTANT: This event is sent from a worker thread. Do not directly update UI in response to this event.
-			Histogram,
-			PostEffectOnOff
+			Histogram,          // Histogram changed and requires a refresh in the UI.
+			PostEffectOnOff,    // A post effect was turned on or off.
 		};
 		virtual void OnRenderWindowEvent(Hints h) = 0;
 		virtual void* EVF(const wchar_t* wszFunc, void* pvData) = 0;

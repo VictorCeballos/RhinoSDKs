@@ -81,6 +81,18 @@ public:
   */
   static bool ModelFolder( unsigned int doc_serial_number, ON_wString& result);
 
+  /*
+  Description:
+    Get full path to the specified model.  If the model has no name then
+    the working folder is returned.
+  Parameters:
+    doc_serial_number [in] - serial number of the specified model
+    result [out] - Buffer to get folder name.
+  Returns:
+    TRUE if successful otherwise FALSE.
+  */
+  static bool ModelPath(unsigned int doc_serial_number, ON_wString& result);
+
   ON_DEPRECATED_MSG("use overload that takes doc_serial_number parameter")
   static bool ModelFolder(ON_wString& result);
 

@@ -122,7 +122,7 @@ public:
 private:
   ON_ClippingPlaneSurface m_plane;
 
-  void UpdateDisplayLines() const;
+  void UpdateDisplayLines(const CRhinoViewport* viewport) const;
   mutable class CRhClippingPlaneDisplay* m_display = nullptr;
   bool m_reserved1 = false;
   bool m_reserved2 = false;

@@ -9,7 +9,7 @@
 // For complete Rhino SDK copyright information see <http://www.rhino3d.com/developer>.
 //
 ////////////////////////////////////////////////////////////////
-
+ 
 #pragma once
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1061,6 +1061,10 @@ public:
 	ON_UUID PreviewEnvironmentId(void) const;
 	void SetPreviewEnvironmentId(ON_UUID id);
   // New for V8 [end]
+
+public:
+  void EnableShadows(bool);
+  bool ShadowsEnabled(void) const;
 
 protected:
   ////////////////////////////////////////////////////

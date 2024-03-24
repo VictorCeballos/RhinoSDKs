@@ -28,14 +28,21 @@ public:
 
 public:
 
-  enum : unsigned
+#pragma region RH_C_SHARED_ENUM [ON_SubDSurfaceInterpolator::MaximumCounts] [Rhino.Geometry.SubDSurfaceInterpolator.MaximumCounts] [nested:uint:clsfalse]
+  /// <summary>
+  /// Stores maximum count values for the solver to work in reasonnable time.
+  /// </summary>
+  enum class MaximumCounts : unsigned int
   {
-    // Interpolation requires building a solver.
-    // If the number of interplolated vertices is greater than MaximumInterpolatedVertexCount,
-    // the solver construction time can be too long for some users' comfort.
-    // Given sufficient time, memory, and CPU resources, the code will work with any value
-    MaximumInterpolatedVertexCount = 1000
+    /// <summary>
+    /// Interpolation requires building a solver.
+    /// If the number of interplolated vertices is greater than MaximumInterpolatedVertexCount,
+    /// the solver construction time can be too long for some users' comfort.
+    /// Given sufficient time, memory, and CPU resources, the code will work with any value
+    /// </summary>
+    MaximumRecommendedInterpolatedVertexCount = 1000U
   };
+#pragma endregion
 
   /*
   Parameters:

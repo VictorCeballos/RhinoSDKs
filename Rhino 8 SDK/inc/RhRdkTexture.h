@@ -358,6 +358,12 @@ public:
 	   Implemented using EVF(L"NeedsBaking", nullptr) */
 	/*virtual*/ bool NeedsBaking(void) const;
 
+	/** Call this method to determine whether Advanced Texture Preview will do a better job of displaying this texture than standard mapping.
+		Further, the function will use the rendererId parameter to determine whether the renderer is capable of rendering the texture by
+		itself. If that is the case, this function will return false.
+		Implemented using EVF(L"NeedsBaking", &rendererId) */
+	/*virtual*/ bool NeedsBaking(const ON_UUID& rendererId) const;
+
 	/** Call this method to determine the dimensions of the image in pixels. 
 		\param widthOut receives the width (along U) of the texture in pixels if supported.
 		\param heightOut receives the height (along V) of the texture in pixels if supported.

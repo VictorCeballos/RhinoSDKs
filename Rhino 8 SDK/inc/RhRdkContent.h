@@ -372,11 +372,12 @@ public:
 		\return \e true if successful, else \e false. */
 	virtual bool UpdateDocumentTables(void) const = 0;
 
-	/** Call this method to open the content in the main content editor and select it
-		for editing by the user. The content must be in a document or the call will fail.
+	/** Call this method to open the content in the main content editor. The content must be attached
+		to a document or the method will fail. The content will be opened in the editor associated with
+		that document (only relevant on Mac).
 		If you override this method, <b>please be sure to call the base class</b>.
 		\return \e true if successful, else \e false. */
-	RDK_DEPRECATED virtual bool OpenInMainEditor(void) const;
+	virtual bool OpenInMainEditor(void) const;
 
 	/** \return This method is deprecated in favor of Edit(). */
 	RDK_DEPRECATED virtual bool OpenInModalEditor(UINT uFlags=0);
@@ -737,24 +738,30 @@ public:
 		\return \e true if a content was ungrouped, \e false if no content or child was part of a group. */
 	virtual bool SmartUngroupRecursive(void);
 
-	/** Duplicate the content. The exact behavior depends on the document status of the content:
-		- If the content is not attached to a document, the function merely returns a copy.
-		  This also happens if the content is associated with but not actually attached to a document.
-		- If the content is attached to a document, the function returns a copy after attaching
-		  the copy to the same document. In this case, an undo record will be created and all
-		  necessary UI will be updated. Even if the source content is a child, the copy will be top-level.
-		  If a hidden content is copied via this method, the copy will not be hidden.
-		\return A pointer to the new content if successful, otherwise null. */
-	virtual const CRhRdkContent* Duplicate(void) const;
+	/** Please call DuplicateEx(DupOpt) instead. */
+	RDK_DEPRECATED virtual const CRhRdkContent* Duplicate(void) const;
 
-	/** Duplicate the content. The exact behavior depends on the document status of the content:
+	/** Please call DuplicateEx(DupOpt) instead. */
+	RDK_DEPRECATED const CRhRdkContent* DuplicateEx(bool reserved) const;
+
+	/** Duplicate the content. The exact behavior depends on the document status of the content and
+		  the value of the DupOpt enum passed as parameter 'd'.
 		- If the content is not associated with a document, the function merely returns a copy.
-		- If the content is associated with (or attached to) a document, the function returns a copy
-		  after attaching the copy to the same document. In this case, an undo record will be created
-		  and all necessary UI will be updated. Even if the source content is a child, the copy will be top-level.
-		  If a hidden content is copied via this method, the copy will not be hidden.
+		- When 'd' is DupOpt::Attach:
+		  - If the content is associated with (or attached to) a document, the function returns a copy
+		    after attaching the copy to the same document. In this case, an undo record will be created
+		    and all necessary UI will be updated. Even if the source content is a child, the copy will be
+		    top-level. If a hidden content is copied via this method, the copy will not be hidden.
+		- When 'd' is DupOpt::NoAttach:
+		  - The function returns a copy without attaching it to the document. In other words, it behaves
+		    exactly as if the original content was not associated with a document.
 		\return A pointer to the new content if successful, otherwise null. */
-	/*virtual [SDK_UNFREEZE]*/ const CRhRdkContent* DuplicateEx(bool reserved) const;
+	enum class DupOpt
+	{
+		Attach,   // Attaches the content to the document.
+		NoAttach, // Does not attach the content to the document.
+	};
+	/*virtual [SDK_UNFREEZE]*/ const CRhRdkContent* DuplicateEx(DupOpt d) const;
 
 	// Enumeration of children and parent.
 
@@ -1198,6 +1205,11 @@ public:
 		\note If the content is already associated with a document, the method will fail.
 		\return \e true if successful, else \e false. */
 	virtual bool SetDocumentAssoc(const CRhinoDoc& doc) const;
+
+	//Similar to the above function, but uses another content as the source.  As this
+	//doesn't access documents directly, but only copies the document ID, this is safe when
+	//used off the main thread.
+	/*virtual*/ bool SetDocumentAssoc(const CRhRdkContent&) const;
 
 	/** Remove the content hierarchy's RDK document association.
 		This allows you to remove the document association of a content hierarchy that is
@@ -1771,6 +1783,9 @@ public:
 
 	/** \return \e true if the arrays contain the same content pointers. */
 	bool operator == (const CRhRdkContentArray& a);
+
+	/** \return \e true if the arrays do not contain the same content pointers. */
+	bool operator != (const CRhRdkContentArray& a);
 
 	/** Emergency virtual function for future expansion. */
 	virtual void* EVF(const wchar_t* wszFunc, void* pvData);

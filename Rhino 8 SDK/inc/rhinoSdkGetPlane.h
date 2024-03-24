@@ -23,7 +23,8 @@ public:
     mode_3point,
     mode_vertical,
     mode_center,
-    mode_3point_mid
+    mode_3point_mid,
+    mode_3point_center
   };
 
   enum {

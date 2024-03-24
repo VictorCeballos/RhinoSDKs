@@ -144,6 +144,11 @@ public:
   CDisplayPipelineAttributes DisplayAttributes() const;
 
   // Description:
+  //  Set horizontal and vertical scales on the CDisplayPipelineAttributes that
+  //  are returned by DisplayAttributes()
+  void SetDisplayAttributesStretch(double horizontalStretch, double verticalStretch);
+
+  // Description:
   //   Get factor used to scale tiles at the target DPI up to the device DPI
   //   Images may be generated at a lower resolution than the device DPI and then
   //   stretch blitted up to the device resolution.
@@ -235,6 +240,11 @@ public:
   ON_4iRect GetScaledDrawRect() const;
   double ScaledDPI() const;
   double GetLineTypeScale() const;
+  double ThinCurveWidthDots() const;
+  double HairlineWidthDots() const;
+  double DefaultWidthDots() const;
+  void SetApplyDisplayModeWidthScales(bool on);
+  bool ApplyDisplayModeWidthScales() const;
 
   void SetViewArea(view_area va);
 

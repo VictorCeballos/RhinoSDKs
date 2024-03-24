@@ -6,18 +6,18 @@
 
 // To update version numbers, edit ..\build\build_dates.msbuild
 #define RMA_VERSION_MAJOR 8
-#define RMA_VERSION_MINOR 0
+#define RMA_VERSION_MINOR 5
 
 ////////////////////////////////////////////////////////////////
 //
 // These are set automatically by the build system as the
 // first step in each build.
 //
-#define RMA_VERSION_YEAR   2023
-#define RMA_VERSION_MONTH  8
-#define RMA_VERSION_DATE   22
-#define RMA_VERSION_HOUR   12
-#define RMA_VERSION_MINUTE 30
+#define RMA_VERSION_YEAR   2024
+#define RMA_VERSION_MONTH  3
+#define RMA_VERSION_DATE   12
+#define RMA_VERSION_HOUR   13
+#define RMA_VERSION_MINUTE 0
 
 ////////////////////////////////////////////////////////////////
 //
@@ -33,22 +33,22 @@
 //     1 = build system trunk build
 //     2 = build system release candidate build
 //     3 = build system release build
-#define RMA_VERSION_BRANCH 5
+#define RMA_VERSION_BRANCH 1
 
-#define VERSION_WITH_COMMAS  8,0,23234,12305
-#define VERSION_WITH_PERIODS 8.0.23234.12305
-#define COPYRIGHT "Copyright (C) 1993-2023, Robert McNeel & Associates. All Rights Reserved."
-#define SPECIAL_BUILD_DESCRIPTION "Rhino WIP"
+#define VERSION_WITH_COMMAS  8,5,24072,13001
+#define VERSION_WITH_PERIODS 8.5.24072.13001
+#define COPYRIGHT "Copyright (C) 1993-2024, Robert McNeel & Associates. All Rights Reserved."
+#define SPECIAL_BUILD_DESCRIPTION "Rhino 8"
 
 #define RMA_VERSION_NUMBER_MAJOR_STRING   "8"
 #define RMA_VERSION_NUMBER_MAJOR_WSTRING L"8"
 #define RMA_PREVIOUS_VERSION_NUMBER_MAJOR_WSTRING L"7"
 
-#define RMA_VERSION_NUMBER_SR_STRING   "SR0"
-#define RMA_VERSION_NUMBER_SR_WSTRING L"SR0"
+#define RMA_VERSION_NUMBER_SR_STRING   "SR5"
+#define RMA_VERSION_NUMBER_SR_WSTRING L"SR5"
 
-#define RMA_VERSION_WITH_PERIODS_STRING   "8.0.23234.12305"
-#define RMA_VERSION_WITH_PERIODS_WSTRING L"8.0.23234.12305"
+#define RMA_VERSION_WITH_PERIODS_STRING   "8.5.24072.13001"
+#define RMA_VERSION_WITH_PERIODS_WSTRING L"8.5.24072.13001"
 
 // BEGIN - OBSOLETE SVN INFORMATION ////////////////////////////
 ////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@
 // the git revision SHA-1 hash in hexadecimal format.
 
 // OBSOLETE - current set to git hash
-#define RMA_SRC_SVN_REVISION "a57e6f2af0fdb4881acdf7e11b8ba55d35e2064e"
+#define RMA_SRC_SVN_REVISION "e3530849b75f00b2b977766a567ae29b055837e9"
 
 // OBSOLETE - never changed
 #define RMA_SRC_SVN_BRANCH ""
@@ -137,6 +137,9 @@ static const ON_UUID LICENSE_GUID_V8_COMMERCIAL =
 
 #else
 #error Generate new UUIDs for license files.
+// When updating this file for Rhino 9,
+// also be sure to add the new GUID to IsCoreRhino() in
+// src4\Zoo\ZooClient\ClientManager.cs
 #endif
 
 //

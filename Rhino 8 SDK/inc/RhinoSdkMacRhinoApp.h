@@ -87,6 +87,7 @@ public:
 
   const char* GetPOSIXLocaleName() const override;
   unsigned int GetPOSIXLocaleIdentifier() const override;
+  static unsigned int GetPOSIXLocaleIdentifier(NSString* locale);
 
   RhCommandAutocompleter& GetCommandAutocompleter();
 
